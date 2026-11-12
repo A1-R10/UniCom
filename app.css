@@ -90,7 +90,7 @@ input,textarea,select{font:inherit;border:0;outline:0}
 .sheet{position:absolute;left:0;right:0;bottom:0;z-index:81;animation:up .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes up{from{transform:translateY(100%)}to{transform:none}}
 .pop{position:absolute;z-index:82;border-radius:22px;background:rgba(245,245,245,.88);backdrop-filter:blur(18px);color:#000;animation:fadein .15s;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-.chip{display:inline-grid;place-items:center;height:20px;padding:0 10px;border-radius:12px;background:#fff;font-size:10px;font-weight:500;color:#444;margin:0 4px 8px 0}
+.chip{display:inline-grid;place-items:center;height:20px;padding:0 10px;border-radius:12px;background:#fff;font-size:10px;font-weight:500;color:#444;margin:0 4px 8px 0;cursor:pointer;user-select:none;transition:.15s}
 .chip.on{background:var(--red2);color:#fff;font-weight:600}
 .toast{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:rgba(30,10,10,.9);color:#fff;font-size:12px;padding:9px 16px;border-radius:20px;z-index:100;animation:fadein .2s;white-space:nowrap}
 /* skeleton */
