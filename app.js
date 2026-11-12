@@ -532,9 +532,13 @@ V.success=()=>`<div class="screen">${bgLayer()}${statusBar}
  <img src="${A('verify.png')}" style="position:absolute;left:111px;top:318px;width:180px;height:180px;object-fit:contain;animation:pop .6s cubic-bezier(.2,1.4,.4,1)">
  <div style="position:absolute;left:0;right:0;top:514px;text-align:center;font-size:25px;font-weight:700">Account Created!</div>
  <div style="position:absolute;left:60px;right:60px;top:552px;text-align:center;font-size:11px;color:rgba(255,255,255,.75);line-height:1.35">Welcome ${esc(ME.name)} to University App.<br>Let's build connections and create opportunities together.</div>
+ <button class="btn" data-act="setup-profile" style="position:absolute;left:30px;right:30px;top:608px;width:auto;height:42px;font-size:13px">${ic('pen',14,'#fff',1.6)}&nbsp; Edit Personal Details & ID</button>
+ <div style="position:absolute;left:0;right:0;top:664px;text-align:center;font-size:10px"><a data-act="skip-home" style="color:rgba(255,255,255,.8);text-decoration:underline;cursor:pointer">Skip to Feed</a></div>
  <div class="confetti" id="cf"></div><style>@keyframes pop{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}</style></div>`;
 B.success=()=>{const c=$('#cf'),col=['#ff6fa8','#a7e66b','#6bb5ff','#ffd24a','#b07bff','#ff8a4d'];for(let i=0;i<46;i++){const e=document.createElement('i');e.style.left=Math.random()*100+'%';e.style.background=col[i%6];e.style.setProperty('--dx',(Math.random()*120-60)+'px');e.style.setProperty('--rx',(360+Math.random()*720)+'deg');e.style.setProperty('--ry',(360+Math.random()*720)+'deg');e.style.setProperty('--rz',(Math.random()*720)+'deg');e.style.animationDuration=(2.2+Math.random()*2)+'s';e.style.animationDelay=(Math.random()*.9)+'s';e.style.width=(8+Math.random()*8)+'px';e.style.height=(14+Math.random()*12)+'px';c.appendChild(e)}
- setTimeout(()=>{if(cur().name==='success')go('skeleton',{},true)},3000)};
+ const setupBtn=$('[data-act=setup-profile]');if(setupBtn)setupBtn.onclick=()=>go('edit');
+ const skipBtn=$('[data-act=skip-home]');if(skipBtn)skipBtn.onclick=()=>go('skeleton',{},true);
+ setTimeout(()=>{if(cur().name==='success')go('skeleton',{},true)},4500)};
 
 V.skeleton=()=>`<div class="screen">${bgLayer()}${statusBar}
  <div class="sk" style="position:absolute;left:19px;top:71px;width:36px;height:36px;border-radius:50%"></div><div class="sk" style="position:absolute;left:66px;top:71px;width:222px;height:36px;border-radius:22px"></div><div class="sk" style="position:absolute;left:296px;top:71px;width:36px;height:36px;border-radius:50%"></div><div class="sk" style="position:absolute;left:341px;top:71px;width:36px;height:36px;border-radius:50%"></div>
@@ -760,11 +764,18 @@ B.orgd=({id})=>{
 };
 
 V.msg=()=>{
- const convos=CONVOS.filter(c=>!S.q||(c.name+' '+c.last).toLowerCase().includes(S.q.toLowerCase()));
+ const list=CONVOS.map(c=>{
+  const extra=S.convoMsgs[c.id]||[];
+  const lastItem=extra.length?extra[extra.length-1]:(c.msgs.length?c.msgs[c.msgs.length-1]:null);
+  const lastTxt=lastItem?(lastItem[0]==='n'?(extra.length>1?extra[extra.length-2][1]:c.last):lastItem[1]):c.last;
+  const lastTime=lastItem&&lastItem[2]?lastItem[2]:c.time;
+  return {...c,last:lastTxt,time:lastTime};
+ });
+ const convos=list.filter(c=>!S.q||(c.name+' '+c.last).toLowerCase().includes(S.q.toLowerCase()));
  return `<div class="screen">${bgLayer()}${statusBar}<div style="position:absolute;left:17px;top:90px;font-size:24px;font-weight:700">Messages</div>
  <div class="search glass" style="left:17px;top:140px;width:368px;height:32px;border-radius:16px;background:rgba(255,255,255,.2)">${ic('search',16,'#fff',1.6)}<input id="q" placeholder="Search people, group..." value="${esc(S.q)}"></div>
  <div class="scroll" id="msg-list" style="position:absolute;left:0;right:0;top:188px;bottom:0;padding-bottom:130px">
-  ${convos.map((c,i)=>`<div class="lg msg-row" data-go="convo" data-p='{"id":"${c.id}"}' style="cursor:pointer;background:${i===0?'linear-gradient(120deg,rgba(255,225,200,.6),rgba(255,235,225,.45))':'rgba(255,255,255,.2)'}">
+  ${convos.map((c,i)=>`<div class="lg msg-row" data-go="convo" data-p='{"id":"${c.id}"}' style="cursor:pointer;background:${(c.badge&&i===0)?'linear-gradient(120deg,rgba(255,225,200,.6),rgba(255,235,225,.45))':'rgba(255,255,255,.2)'}">
     ${c.group?`<span style="width:32px;height:32px;border-radius:50%;background:#b42222;display:grid;place-items:center">${ic('users',16,'#fff',1.6)}</span>`:`<img src="${c.av}">`}
     <div style="flex:1;min-width:0"><b style="font-size:11px;display:block">${esc(c.name)}</b><span style="font-size:8.5px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block">${esc(c.last)}</span></div>
     <div style="text-align:right;font-size:8px;opacity:.85;align-self:flex-start">${c.time}${c.badge?`<div style="margin:6px 0 0 auto;width:15px;height:15px;border-radius:50%;background:#c42b2b;font-size:8px;font-weight:700;display:grid;place-items:center">${c.badge}</div>`:''}</div>
@@ -773,7 +784,9 @@ V.msg=()=>{
 };
 
 V.convo=({id}={})=>{
- const c=CONVOS.find(x=>x.id===id)||CONVOS[0];
+ const targetId=id||(cur().p&&cur().p.id)||(CONVOS[0]&&CONVOS[0].id);
+ const c=CONVOS.find(x=>x.id===targetId)||CONVOS[0];
+ c.badge=0;
  const m=[...c.msgs,...(S.convoMsgs[c.id]||[])];
  return `<div class="screen">${bgLayer()}${statusBar}
  <button class="glass" data-back style="position:absolute;left:18px;top:76px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;z-index:5">${ic('back',16,'#fff',2)}</button>
@@ -781,7 +794,54 @@ V.convo=({id}={})=>{
  <div class="scroll" id="cv" style="top:128px;bottom:84px;padding:10px 14px"><div style="text-align:center;margin-bottom:12px"><span class="glass" style="font-size:9px;padding:3px 12px;border-radius:10px;background:rgba(255,255,255,.2)">Oct 15</span></div>${m.map(x=>x[0]==='n'?`<div style="text-align:center;margin:8px 0"><span class="glass" style="font-size:9px;padding:3px 12px;border-radius:10px;background:rgba(255,255,255,.2)">${x[1]}</span></div>`:`<div style="display:flex;gap:6px;align-items:flex-end;margin-bottom:10px;${x[0]==='r'?'justify-content:flex-end':''}">${x[0]==='l'?(c.group?'<span style="width:22px;height:22px;border-radius:50%;background:#b42222"></span>':`<img src="${c.av}" style="width:22px;height:22px;border-radius:50%;object-fit:cover">`):''}<div><div class="bub ${x[0]}">${esc(x[1])}</div><div style="font-size:7px;opacity:.7;margin-top:2px;${x[0]==='r'?'text-align:right':''}">${x[2]||''}${x[0]==='r'?' ✓✓':''}</div></div></div>`).join('')}</div>
  <div style="position:absolute;left:14px;right:14px;top:800px;height:42px;display:flex;gap:10px;align-items:center;z-index:5"><button class="glass" style="width:34px;height:34px;border-radius:50%;display:grid;place-items:center">${ic('plain',18,'#fff',1.8)}</button><div class="glass" style="flex:1;height:36px;border-radius:18px;display:flex;align-items:center;padding:0 14px"><input id="mi" placeholder="Type a message..." style="background:none;color:#fff;font-size:11px;width:100%"></div><button class="glass" data-act="send" style="width:34px;height:34px;border-radius:50%;display:grid;place-items:center">${ic('send',16,'#fff',1.6)}</button></div></div>`;
 };
-B.convo=({id})=>{const cv=$('#cv');if(cv)cv.scrollTop=cv.scrollHeight;const send=()=>{const v=$('#mi').value.trim();if(!v)return;(S.convoMsgs[id]=S.convoMsgs[id]||[]).push(['r',v,'9:25 AM']);render()};$('[data-act=send]').onclick=send;$('#mi').onkeydown=e=>{if(e.key==='Enter')send()}};
+B.convo=({id}={})=>{
+ const targetId=id||(cur().p&&cur().p.id)||(CONVOS[0]&&CONVOS[0].id);
+ const c=CONVOS.find(x=>x.id===targetId)||CONVOS[0];
+ const cv=$('#cv');
+ const scrollBottom=(smooth=false)=>{
+  if(cv){
+   if(smooth&&cv.scrollTo)cv.scrollTo({top:cv.scrollHeight+1000,behavior:'smooth'});
+   else cv.scrollTop=cv.scrollHeight+1000;
+  }
+ };
+ scrollBottom();
+ if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>scrollBottom());
+ setTimeout(()=>scrollBottom(),40);
+ setTimeout(()=>scrollBottom(),120);
+
+ const send=()=>{
+  const inp=$('#mi');
+  if(!inp)return;
+  const v=inp.value.trim();
+  if(!v)return;
+  const timeStr='Just now';
+  (S.convoMsgs[c.id]=S.convoMsgs[c.id]||[]).push(['r',v,timeStr]);
+  c.last=v;
+  c.time=timeStr;
+  const idx=CONVOS.findIndex(x=>x.id===c.id);
+  if(idx>0){
+   const [item]=CONVOS.splice(idx,1);
+   CONVOS.unshift(item);
+  }
+  inp.value='';
+  if(cv){
+   const bubble=document.createElement('div');
+   bubble.style.cssText='display:flex;gap:6px;align-items:flex-end;margin-bottom:10px;justify-content:flex-end';
+   bubble.innerHTML=`<div><div class="bub r">${esc(v)}</div><div style="font-size:7px;opacity:.7;margin-top:2px;text-align:right">${timeStr} ✓✓</div></div>`;
+   cv.appendChild(bubble);
+   scrollBottom(true);
+  }else{
+   render();
+  }
+ };
+ const sBtn=$('[data-act=send]');
+ if(sBtn)sBtn.onclick=send;
+ const miInp=$('#mi');
+ if(miInp){
+  miInp.onkeydown=e=>{if(e.key==='Enter')send()};
+  setTimeout(()=>miInp.focus(),100);
+ }
+};
 
 const catIc=[['Foods','food'],['Services','shirt'],['Rentals','calc'],['Electronics','head'],['Art & Craft','brush']];
 
@@ -842,6 +902,7 @@ V.market=()=>{
 
 V.mkd=({id}={})=>{
  const m=MK.find(x=>x.id===id)||MK[0];
+ const isMyItem=m.seller===ME.name||m.sellerId===ME.id||m.mine;
  return `<div class="screen" style="background:#f5f5f5;color:#000">
  <div style="position:absolute;left:20px;top:0;width:362px;height:360px;background:#fff">
   <img src="${m.img}" data-act="view-img" data-img="${m.img}" data-caption="${esc(m.name)}" style="width:100%;height:100%;object-fit:${['tee','calc','attire','mouse'].includes(m.id)?'contain':'cover'};cursor:pointer">
@@ -849,15 +910,16 @@ V.mkd=({id}={})=>{
  <div style="position:absolute;left:0;right:0;top:0;height:110px;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(255,255,255,0))"></div>
  ${statusBar}
  <button class="back" data-back style="top:68px">${ic('back',22,'#fff',2)}</button>
- <button style="position:absolute;right:14px;top:68px;color:#fff;z-index:50">${ic('dots',24)}</button>
+ <button data-act="edit-item" data-id="${m.id}" style="position:absolute;right:14px;top:68px;color:#fff;z-index:50;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.45);border-radius:14px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(10px)">${ic('pen',13,'#fff',2)} Edit</button>
  <div style="position:absolute;left:25px;top:378px;right:20px"><div style="font-size:19px;font-weight:700">${esc(m.name)}</div><div style="font-size:23px;font-weight:700;color:#712222;margin-top:6px">${m.p?'₱'+m.p:'Inquire'}</div><div style="font-size:11px;font-weight:600;color:#777;margin-top:4px">${esc(m.st)} <span style="font-weight:400;font-size:9px">&nbsp;• ${esc(m.ago)}</span></div><div style="font-size:12.5px;color:#777;margin-top:10px;line-height:1.3;width:240px">${esc(m.d)}</div></div>
  <div style="position:absolute;left:22px;right:25px;top:565px">${[['clip','Condition',m.cond||'Good'],['bag','Category',m.cat||'General'],['user','Seller',m.seller||'MSEUF Student']].map(r=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:22px;font-size:13.500px;font-weight:600">${ic(r[0],22,'#712222',1.6)}<span style="flex:1">${r[1]}</span><b>${r[2]}</b></div>`).join('')}</div>
- <button class="btn soft" data-act="msgseller" data-seller="${esc(m.seller||'Mark Rivera')}" style="position:absolute;left:23px;right:23px;top:760px;width:auto;height:48px;font-size:15px">Message Seller</button><div class="home-ind" style="background:#fff"></div></div>`;
+ ${isMyItem?`<button class="btn soft" data-act="edit-item" data-id="${m.id}" style="position:absolute;left:23px;right:23px;top:760px;width:auto;height:48px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px">${ic('pen',16,'#712222',2)} Edit Listing</button>`:`<button class="btn soft" data-act="msgseller" data-seller="${esc(m.seller||'Mark Rivera')}" style="position:absolute;left:23px;right:23px;top:760px;width:auto;height:48px;font-size:15px">Message Seller</button>`}<div class="home-ind" style="background:#fff"></div></div>`;
 };
 B.mkd=()=>{
- $('[data-act=msgseller]').onclick=()=>{
-  go('convo',{id:'mark'});
- };
+ const msgBtn=$('[data-act=msgseller]');
+ if(msgBtn)msgBtn.onclick=()=>go('convo',{id:'mark'});
+ const editBtn=$('[data-act=edit-item]');
+ if(editBtn)editBtn.onclick=e=>openEditItem(e.currentTarget.dataset.id);
 };
 
 V.profile=()=>{
@@ -893,27 +955,42 @@ B.settings=()=>$('[data-act=logout]').onclick=()=>{toast('Logged out');reset('lo
 
 const lab=t=>`<div style="font-size:8.5px;font-weight:700;margin:0 0 4px 4px;color:#fff">${t}</div>`;
 V.edit=()=>`<div class="screen">${bgLayer()}${statusBar}<button class="back" data-back>${ic('back',22,'#fff',1.8)}</button><div class="ptitle" style="font-size:15px">Edit Profile</div>
- <div style="position:absolute;left:0;right:0;top:108px;display:flex;justify-content:center;z-index:2">
-   <div style="position:relative;width:104px;height:104px">
-     <img id="ep-avatar-img" src="${ME.av}" style="width:104px;height:104px;border-radius:50%;object-fit:cover;border:2.5px solid rgba(255,255,255,.8);box-shadow:0 4px 14px rgba(0,0,0,.35)">
-     <label style="position:absolute;right:0;bottom:0;width:32px;height:32px;border-radius:50%;background:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35)">
-       ${ic('camera',16,'#a31f1f',1.6)}
-       <input id="ep-avatar-input" type="file" accept="image/*" hidden>
-     </label>
-   </div>
+ <div class="scroll" style="top:92px;bottom:72px;padding:8px 19px 24px">
+  <div style="display:flex;justify-content:center;margin-bottom:14px">
+    <div style="position:relative;width:96px;height:96px">
+      <img id="ep-avatar-img" src="${ME.av}" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:2.5px solid rgba(255,255,255,.8);box-shadow:0 4px 14px rgba(0,0,0,.35)">
+      <label style="position:absolute;right:0;bottom:0;width:30px;height:30px;border-radius:50%;background:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35)">
+        ${ic('camera',15,'#a31f1f',1.6)}
+        <input id="ep-avatar-input" type="file" accept="image/*" hidden>
+      </label>
+    </div>
+  </div>
+  <div class="lg" style="border-radius:18px;padding:12px 14px 14px;margin-bottom:12px">
+   <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:10px">Account Details ${ic('pen',14,'#fff',1.6)}</div>
+   ${lab('Full Name')}
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-name" value="${esc(ME.name)}" style="font-size:10px"></div>
+   ${lab('Student / Employee Number')}
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-id" value="${esc(ME.id)}" placeholder="e.g. 404-02025" style="font-size:10px"></div>
+   ${lab('Email')}
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-email" value="${esc(ME.email)}" style="font-size:10px"></div>
+   ${lab('Phone Number (Optional)')}
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-phone" value="${esc(ME.phone||'+63 900 000 0000')}" style="font-size:10px"></div>
+   ${lab('Birthday')}
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:4px;padding:0 10px"><input id="ep-bday" value="${esc(ME.bday||'01/01/2004')}" style="font-size:10px"></div>
+  </div>
+
+  <div class="lg" style="border-radius:18px;padding:12px 14px 14px;margin-bottom:12px">
+   <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:10px">Personal & Academic Details ${ic('grad',14,'#fff',1.6)}</div>
+   ${lab('Department')}
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-dept" value="${esc(ME.dept||'CCMS Department')}" placeholder="e.g. CCMS Department" style="font-size:10px"></div>
+   ${lab('Year / Level')}
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-year" value="${esc(ME.year||'BSCS 3rd Year')}" placeholder="e.g. BSCS 3rd Year" style="font-size:10px"></div>
+   ${lab('Affiliated Organization')}
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:4px;padding:0 10px"><input id="ep-org" value="${esc(ME.org||'Pet Society')}" placeholder="e.g. Pet Society" style="font-size:10px"></div>
+  </div>
  </div>
- <div class="lg" style="position:absolute;left:19px;right:19px;top:236px;border-radius:18px;padding:12px 12px 14px">
-  <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:10px">Account Details ${ic('pen',14,'#fff',1.6)}</div>
-  ${lab('Full Name')}
-  <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-name" value="${esc(ME.name)}" style="font-size:10px"></div>
-  ${lab('Email')}
-  <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-email" value="${esc(ME.email)}" style="font-size:10px"></div>
-  ${lab('Phone Number (Optional)')}
-  <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-phone" value="${esc(ME.phone||'+63 900 000 0000')}" style="font-size:10px"></div>
-  ${lab('Birthday')}
-  <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-bday" value="${esc(ME.bday||'01/01/2004')}" style="font-size:10px"></div>
- </div>
- <button class="btn" data-act="saveprof" style="position:absolute;left:30px;right:30px;top:752px;width:auto;font-size:13px">Save Changes</button></div>`;
+ <button class="btn" data-act="saveprof" style="position:absolute;left:30px;right:30px;bottom:18px;width:auto;height:42px;font-size:13px;z-index:10">Save Changes</button>
+</div>`;
 B.edit=()=>{
  let newAv=ME.av;
  const avInput=$('#ep-avatar-input');
@@ -928,26 +1005,58 @@ B.edit=()=>{
  }
  $('[data-act=saveprof]').onclick=()=>{
   const n=$('#ep-name').value.trim();
+  const idVal=$('#ep-id').value.trim();
   const em=$('#ep-email').value.trim();
   const ph=$('#ep-phone').value.trim();
   const bd=$('#ep-bday').value.trim();
+  const dept=$('#ep-dept').value.trim();
+  const yr=$('#ep-year').value.trim();
+  const org=$('#ep-org').value.trim();
+
   if(!n)return toast('Full Name cannot be empty');
+  if(!idVal)return toast('Student Number cannot be empty');
   if(!em)return toast('Email cannot be empty');
+
+  const oldId=ME.id;
   const oldName=ME.name;
   ME.name=n;
+  ME.id=idVal;
   ME.email=em;
   ME.phone=ph;
   ME.bday=bd;
+  ME.dept=dept||'CCMS Department';
+  ME.year=yr||'BSCS 3rd Year';
+  ME.org=org||'None';
   ME.av=newAv;
-  const u=USERS.find(x=>x.id===ME.id||x.email===ME.email);
+
+  const u=USERS.find(x=>x.id===oldId||x.id===ME.id||x.email===ME.email);
   if(u)Object.assign(u,ME);
+  else USERS.push({...ME});
+
   POSTS.forEach(p=>{
-   if(p.userId===ME.id||p.user===oldName){
+   if(p.userId===oldId||p.userId===ME.id||p.user===oldName){
     p.user=ME.name;
     p.av=ME.av;
+    p.userId=ME.id;
+    if(!p.sub||p.sub.includes('Year')||p.sub.includes('BSCS')||p.sub.includes('Department'))p.sub=ME.year;
    }
   });
-  toast('Profile updated successfully!');
+
+  ORGS.forEach(o=>{
+   if(o.creatorId===oldId)o.creatorId=ME.id;
+   if(o.admins)o.admins=o.admins.map(a=>a===oldId?ME.id:a);
+   if(o.officers){
+    o.officers.forEach(off=>{
+     if(off.id===oldId||off.name===oldName){
+      off.name=ME.name;
+      off.id=ME.id;
+      off.av=ME.av;
+     }
+    });
+   }
+  });
+
+  toast('Personal details updated successfully!');
   setTimeout(back,600);
  };
 };
@@ -1136,8 +1245,6 @@ function openNewPost(){
   const txt=keep?$('#pt').value:'';
   const isOrg=cat==='Organization';
   const orgObj=ORGS.find(x=>x.id===selectedOrg||x.short===selectedOrg)||ORGS[0];
-  const postAuthor=isOrg?orgObj.name:ME.name;
-  const postAvatar=isOrg?orgObj.logo:ME.av;
 
   overlay(`<div class="dim" data-close></div>
   <div class="sheet sheetcard lg" style="height:650px;background:rgba(255,235,235,.6);backdrop-filter:blur(26px);color:#000;padding:0 20px;border-radius:36px 36px 0 0;box-shadow:inset 0 0 20px rgba(255,255,255,.6),inset 0 0 0 1px #fff;display:flex;flex-direction:column">
@@ -1146,10 +1253,10 @@ function openNewPost(){
    <div class="scroll" style="position:static;flex:1;overflow-y:auto;padding-bottom:16px">
      
      <div style="display:flex;gap:10px;align-items:center;margin-top:16px;background:rgba(255,255,255,.5);padding:8px 12px;border-radius:12px">
-       <img src="${postAvatar}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;box-shadow:0 2px 5px rgba(0,0,0,.15);border:1px solid #fff">
+       <img src="${ME.av}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;box-shadow:0 2px 5px rgba(0,0,0,.15);border:1px solid #fff">
        <div>
-         <b style="font-size:12.5px;display:flex;align-items:center;gap:4px;color:#222">${esc(postAuthor)}${isOrg?verified(12):''}</b>
-         <span style="font-size:8px;color:${isOrg?'#c42b2b':'#666'};font-weight:600">${isOrg?'Posting as Organization':'Posting as Student'}</span>
+         <b style="font-size:12.5px;display:flex;align-items:center;gap:4px;color:#222">${esc(ME.name)}</b>
+         <span style="font-size:8px;color:${isOrg?'#c42b2b':'#666'};font-weight:600">${isOrg?`Posting to ${esc(orgObj.short)}`:(ME.year||'Posting as Student')}</span>
        </div>
      </div>
 
@@ -1170,7 +1277,7 @@ function openNewPost(){
      </label>`}
 
      <div style="display:flex;gap:8px;align-items:center;margin-top:16px;font-size:11px">${ic('users',14,'#333',1.5)}Post to:</div>
-     ${[['Campus','Visible to all students, faculty, and staff'],['Social','Only visible to students'],['Organization','Post directly as the organization']].map(r=>`<div data-c="${r[0]}" style="display:flex;gap:12px;align-items:flex-start;margin-top:12px;cursor:pointer">
+     ${[['Campus','Visible to all students, faculty, and staff'],['Social','Only visible to students'],['Organization','Post in the organization community']].map(r=>`<div data-c="${r[0]}" style="display:flex;gap:12px;align-items:flex-start;margin-top:12px;cursor:pointer">
        <span class="radio ${cat===r[0]?'on':''}"></span>
        <div>
          <b style="font-size:11px">${r[0]}</b>
@@ -1221,14 +1328,14 @@ function openNewPost(){
     id:Date.now(),
     cat:cat==='Organization'?['org','campus','mine']:[cats[cat],'mine'],
     userId:ME.id,
-    user:cat==='Organization'?(orgTarget?orgTarget.name:osVal):ME.name,
-    v:cat==='Organization'?1:0,
+    user:ME.name,
+    v:0,
     orgId:orgTarget?orgTarget.id:undefined,
-    sub:cat==='Organization'?(orgTarget?`${orgTarget.type} Organization`:'Organization'):ME.year,
+    sub:cat==='Organization'?(orgTarget?`${ME.year} • ${orgTarget.short}`:ME.year):ME.year,
     t:'now',
     m:0,
-    av:cat==='Organization'?(orgTarget?orgTarget.logo:ME.av):ME.av,
-    title:v.split('\n')[0]||(cat==='Organization'?`${orgTarget?orgTarget.short:'Org'} Announcement`:'New Update'),
+    av:ME.av,
+    title:v.split('\n')[0]||'New Update',
     text:v.split('\n').slice(1).join(' ')||'',
     img,
     h:190,
@@ -1243,7 +1350,7 @@ function openNewPost(){
    if(cat==='Organization'){
     S.feed='org';
     reset('org');
-    toast(`Posted as ${orgTarget?orgTarget.short:'Organization'}`);
+    toast(`Posted to ${orgTarget?orgTarget.short:'Organization'}`);
    }else{
     S.feed=cats[cat];
     reset('home');
@@ -1359,6 +1466,110 @@ function openPostItem(){
    toast('Item posted to Marketplace!');
    if(cur().name==='market')render();
    else reset('market');
+  };
+ };
+ draw();
+}
+
+function openEditItem(itemId){
+ const existing=MK.find(x=>x.id===itemId||String(x.id)===String(itemId));
+ if(!existing)return toast('Item not found');
+ let itemImg=existing.img;
+ const draw=(keep)=>{
+  const n=keep?$('#mi-name').value:existing.name;
+  const p=keep?$('#mi-price').value:existing.p;
+  const c=keep?$('#mi-cat').value:(existing.cat||'Foods');
+  const s=keep?$('#mi-st').value:(existing.st||'For Sale');
+  const cd=keep?$('#mi-cond').value:(existing.cond||'Good');
+  const d=keep?$('#mi-desc').value:(existing.d||'');
+  overlay(`<div class="dim" data-close></div>
+  <div class="sheet sheetcard lg" style="height:670px;background:rgba(255,235,235,.6);backdrop-filter:blur(26px);color:#000;padding:0 20px;border-radius:36px 36px 0 0;box-shadow:inset 0 0 20px rgba(255,255,255,.6),inset 0 0 0 1px #fff;display:flex;flex-direction:column">
+   <div style="width:42px;height:4px;border-radius:3px;background:#999;margin:8px auto 0"></div>
+   <div style="text-align:center;color:#c42b2b;font-size:15px;font-weight:700;margin-top:10px;position:relative">
+     Edit Marketplace Item
+     <span data-close style="position:absolute;right:0;top:-2px;font-size:20px;cursor:pointer;font-weight:400">✕</span>
+   </div>
+   <div class="scroll" style="position:static;flex:1;overflow-y:auto;padding:12px 0 16px">
+     <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Item Name / Title</div>
+     <div class="field" style="height:34px;border-radius:8px;background:#fff;margin-bottom:10px;padding:0 12px"><input id="mi-name" placeholder="What are you offering?" value="${esc(n)}" style="font-size:10px"></div>
+     
+     <div style="display:flex;gap:10px;margin-bottom:10px">
+       <div style="flex:1">
+         <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Price (₱)</div>
+         <div class="field" style="height:34px;border-radius:8px;background:#fff;padding:0 12px"><input id="mi-price" type="number" placeholder="0 = Inquire" value="${esc(p)}" style="font-size:10px"></div>
+       </div>
+       <div style="flex:1">
+         <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Category</div>
+         <select id="mi-cat" style="width:100%;height:34px;border-radius:8px;background:#fff;padding:0 8px;font-size:10px;color:#333">
+           ${['Foods','Services','Rentals','Electronics','Art & Craft','Clothing'].map(x=>`<option value="${x}" ${c===x?'selected':''}>${x}</option>`).join('')}
+         </select>
+       </div>
+     </div>
+
+     <div style="display:flex;gap:10px;margin-bottom:10px">
+       <div style="flex:1">
+         <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Status</div>
+         <select id="mi-st" style="width:100%;height:34px;border-radius:8px;background:#fff;padding:0 8px;font-size:10px;color:#333">
+           ${['For Sale','For Rent','Service'].map(x=>`<option value="${x}" ${s===x?'selected':''}>${x}</option>`).join('')}
+         </select>
+       </div>
+       <div style="flex:1">
+         <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Condition</div>
+         <select id="mi-cond" style="width:100%;height:34px;border-radius:8px;background:#fff;padding:0 8px;font-size:10px;color:#333">
+           ${['Brand new','Like new','Slightly used','Good','Freshly made','Made to order','Available'].map(x=>`<option value="${x}" ${cd===x?'selected':''}>${x}</option>`).join('')}
+         </select>
+       </div>
+     </div>
+
+     <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Description</div>
+     <textarea id="mi-desc" placeholder="Describe the item, meetup locations, terms..." style="width:100%;height:60px;border-radius:8px;padding:8px 10px;font-size:10px;resize:none;background:#fff;color:#000;margin-bottom:12px">${esc(d)}</textarea>
+
+     <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:6px">Item Photo</div>
+     ${itemImg?`
+     <div style="position:relative;width:100%;height:120px;border-radius:10px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+       <img src="${itemImg}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" data-act="view-img" data-img="${itemImg}">
+       <button type="button" data-act="del-item-img" title="Remove picture" style="position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;cursor:pointer">✕</button>
+       <label style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.7);color:#fff;padding:4px 10px;border-radius:14px;font-size:9.5px;font-weight:600;display:flex;gap:5px;align-items:center;cursor:pointer">
+         ${ic('photo',13,'#fff',1.6)} Change photo
+         <input id="mi-file-change" type="file" accept="image/*" hidden>
+       </label>
+     </div>`:
+     `<label style="display:flex;gap:8px;align-items:center;height:38px;background:#fff;border-radius:8px;padding:0 12px;font-size:10px;color:#666;cursor:pointer;margin-bottom:14px">
+       ${ic('photo',18,'#666',1.4)} Attach item photo
+       <input id="mi-file" type="file" accept="image/*" hidden>
+     </label>`}
+
+     <button class="btn soft" data-sub-saveitem style="height:36px;font-size:13px">Save Changes</button>
+   </div>
+  </div>`);
+
+  const ov=$('#ov');
+  ov.querySelectorAll('[data-close]').forEach(e=>e.onclick=closeOv);
+  const fIn=$('#mi-file');if(fIn)fIn.onchange=e=>{if(e.target.files[0]){itemImg=URL.createObjectURL(e.target.files[0]);draw(1)}};
+  const fcIn=$('#mi-file-change');if(fcIn)fcIn.onchange=e=>{if(e.target.files[0]){itemImg=URL.createObjectURL(e.target.files[0]);draw(1)}};
+  const dImg=$('[data-act=del-item-img]');if(dImg)dImg.onclick=()=>{itemImg=null;draw(1)};
+
+  $('[data-sub-saveitem]').onclick=()=>{
+   const nameVal=$('#mi-name').value.trim();
+   const priceVal=parseFloat($('#mi-price').value)||0;
+   const catVal=$('#mi-cat').value;
+   const stVal=$('#mi-st').value;
+   const condVal=$('#mi-cond').value;
+   const descVal=$('#mi-desc').value.trim();
+
+   if(!nameVal)return toast('Please enter item name');
+
+   existing.name=nameVal;
+   existing.p=priceVal;
+   existing.cat=catVal;
+   existing.st=stVal;
+   existing.cond=condVal;
+   existing.d=descVal;
+   if(itemImg)existing.img=itemImg;
+
+   closeOv();
+   toast('Marketplace item updated!');
+   render();
   };
  };
  draw();
@@ -1724,6 +1935,7 @@ phone.addEventListener('click',e=>{
  }
  else if(a==='cmt')openComments(+t.dataset.id);
  else if(a==='postitem')openPostItem();
+ else if(a==='edit-item')openEditItem(t.dataset.id);
  else if(a==='view-img')openImageViewer(t.dataset.img||t.src,t.dataset.caption||'');
  else if(a==='go-org'){const oId=t.dataset.oid;if(oId)go('orgd',{id:oId})}
  else if(a==='open-add-officer')openAddOfficer(t.dataset.oid||(cur().p&&cur().p.id));
