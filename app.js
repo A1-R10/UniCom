@@ -68,6 +68,11 @@ const DEFAULT_USERS=[
  {name:'Siegfred Calayag',email:'siegfred.calayag@mseuf.edu.ph',password:'password123',type:'Student',id:'404-02025',dept:'CCMS Department',year:'BSCS 3rd Year',org:'Pet Society',phone:'+63 900 000 0000',bday:'01/01/2004',av:A('profile.jpg')},
  {name:'Maria Santos',email:'maria.santos@mseuf.edu.ph',password:'password123',type:'Student',id:'404-01042',dept:'CCMS Department',year:'BSCS 2nd Year',org:'University Collegiate Student Council',phone:'+63 912 345 6789',bday:'05/14/2004',av:A('user5.jpg')}
 ];
+/* departments: students pick a college; employees/faculty can also pick an office */
+const DEPTS_STUDENT=['CENG','CCJC','CCMS','CED','CAS','CNAHS','CIHTM','CAFA','CME','BED','CBA'];
+const DEPTS_EMPLOYEE_EXTRA=['CSCJPS','Alumni','IGSR','GSD','Procurement','DCAVRKMI','ICTD','Legal',"Registrar's Office",'Admission Office','OSAS','HRD','University Libraries','EMRC','UCSC'];
+const deptOptions=type=>type==='Employee'?[...DEPTS_STUDENT,...DEPTS_EMPLOYEE_EXTRA]:DEPTS_STUDENT;
+
 let USERS=[...DEFAULT_USERS];
 let ME={...USERS[0]};
 
@@ -244,7 +249,7 @@ let ORGS=[
   name:'Hospitality Management Society',
   short:'Hospitality Management Society',
   type:'Department',
-  dept:'CHTM',
+  dept:'CIHTM',
   logo:A('hospi-soc.jpg'),
   cover:A('sus.jpg'),
   mem:'1.2k',
@@ -262,7 +267,7 @@ let ORGS=[
    {name:'Angela Garcia',role:'Culinary Head',av:A('user3.jpg'),canEdit:true,id:'angela'}
   ],
   reqs:[
-   'Enrolled CHTM student in good standing.',
+   'Enrolled CIHTM student in good standing.',
    'Complies with food safety and kitchen uniform standards.'
   ],
   acts:[
@@ -478,10 +483,11 @@ V.signup=()=>{const st=S.signup.type==='Student';return `<div class="screen">${b
  <div class="field" style="height:38px"><span>${ic('user',17,'#a3a1a1',1.4)}</span><input placeholder="Enter your full name..." id="fn"></div>
  <div class="field" style="height:38px"><span>${ic('mail',17,'#a3a1a1',1.4)}</span><input placeholder="Enter your school email..." id="se"></div>
  <div class="field" style="height:38px"><span>${ic('id',17,'#a3a1a1',1.4)}</span><input id="sn" placeholder="${st?'Enter your student number...':'Enter your employee number...'}"></div>
+ <div class="field" style="height:38px"><span>${ic('org',17,'#a3a1a1',1.4)}</span><select id="dept"><option value="" selected disabled hidden>Select your department...</option>${deptOptions(S.signup.type).map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('')}</select><span style="display:grid;pointer-events:none">${ic('chevd',16,'#a3a1a1',1.6)}</span></div>
  ${pw2('Enter your password...','p1')}${pw2('Re-enter your password...','p2')}</div>
- <label style="position:absolute;left:26px;top:630px;display:flex;gap:8px;align-items:center;font-size:9px;color:#fff;cursor:pointer"><span id="agree" style="width:14px;height:14px;border-radius:3px;background:#e23d3d;display:grid;place-items:center">${ic('check',11,'#fff',3)}</span>I agree to the <b style="color:#ff6a6a;font-weight:500">Terms of Services</b> and <b style="color:#ff6a6a;font-weight:500">Privacy Policy</b></label>
- <button class="btn" data-act="next" style="position:absolute;left:26px;right:26px;top:658px;width:auto;font-size:13px">NEXT</button>
- <div style="position:absolute;left:0;right:0;top:716px;text-align:center;font-size:10px">Already have an account? <a data-back style="color:#ff6a6a;text-decoration:underline;cursor:pointer">Login</a></div></div>`};
+ <label style="position:absolute;left:26px;top:684px;display:flex;gap:8px;align-items:center;font-size:9px;color:#fff;cursor:pointer"><span id="agree" style="width:14px;height:14px;border-radius:3px;background:#e23d3d;display:grid;place-items:center">${ic('check',11,'#fff',3)}</span>I agree to the <b style="color:#ff6a6a;font-weight:500">Terms of Services</b> and <b style="color:#ff6a6a;font-weight:500">Privacy Policy</b></label>
+ <button class="btn" data-act="next" style="position:absolute;left:26px;right:26px;top:712px;width:auto;font-size:13px">NEXT</button>
+ <div style="position:absolute;left:0;right:0;top:770px;text-align:center;font-size:10px">Already have an account? <a data-back style="color:#ff6a6a;text-decoration:underline;cursor:pointer">Login</a></div></div>`};
 const tp=on=>`flex:1;height:38px;border-radius:8px;background:${on?'#ffd9d9':'#fff'};border:${on?'1.5px solid #c42b2b':'1px solid #ddd'};color:${on?'#a31f1f':'#555'};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:9px;font-weight:600`;
 const pw2=(ph,id)=>`<div class="field" style="height:38px"><span>${ic('lock',17,'#a3a1a1',1.4)}</span><input id="${id}" type="password" placeholder="${ph}"><button data-eye="${id}" style="display:grid;cursor:pointer">${ic('eyeoff',17,'#a3a1a1',1.4)}</button></div>`;
 B.signup=()=>{phone.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>{S.signup.type=b.dataset.type;render()});
@@ -496,6 +502,8 @@ B.signup=()=>{phone.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>{S.
   if(!fn)return toast('Please enter your full name');
   if(!se)return toast('Please enter your school email');
   if(!sn)return toast(S.signup.type==='Student'?'Please enter your student number':'Please enter your employee number');
+  const dp=$('#dept').value;
+  if(!dp)return toast('Please select your department');
   if(!p1)return toast('Please enter a password');
   if(p1!==p2)return toast('Passwords do not match');
   S.pendingUser={
@@ -503,7 +511,7 @@ B.signup=()=>{phone.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>{S.
    email:se,
    id:sn,
    type:S.signup.type,
-   dept:'',
+   dept:dp,
    year:'',
    org:'',
    phone:'',
@@ -679,9 +687,9 @@ V.orgd=({id,tab='Overview'}={})=>{
  const isAnyOff=isAnyOfficer(o);
  
  let body='';
- if(tab==='Overview')body=`<div class="sec">${ic('doc',17,'#a31f1f',1.6)}About Us</div><p style="font-size:8.5px;color:#666;line-height:1.35;margin:8px 0 14px">${esc(o.about||o.desc)}</p>
- <div style="display:flex;gap:8px">${[['users',o.mem||'1.2k','Members'],['pin','MSEUF',o.loc||'Main Campus'],['cal','Founded',o.founded||'2026']].map(x=>`<div style="flex:1;background:#fff;border-radius:8px;padding:8px;display:flex;gap:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.1)">${ic(x[0],14,'#a31f1f',1.6)}<div style="font-size:7px;color:#a31f1f"><b style="font-size:9px;display:block">${x[1]}</b>${x[2]}</div></div>`).join('')}</div>
- <div class="sec" style="margin:16px 0 8px">${ic('check',15,'#a31f1f',2.5).replace('M5 12.500l4.500 4.500L19 7.500','M12 3l2.600 5.600 6 .8-4.400 4.200 1.100 6L12 16.700 6.700 19.600l1.100-6L3.400 9.400l6-.8z')}Highlights</div><div style="display:flex;gap:10px">${(o.hl||['Leadership','Events','Community']).map(h=>`<div style="flex:1;height:72px;background:#fdeaea;border-radius:8px;border:1px solid #f0c9c9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:8px;color:#a31f1f;font-weight:600">${ic('grad',18,'#a31f1f',1.5)}${h}</div>`).join('')}</div>`;
+ if(tab==='Overview')body=`<div class="sec">${ic('doc',17,'#a31f1f',1.6)}About Us</div><p style="font-size:11.5px;color:#555;line-height:1.5;margin:10px 0 16px">${esc(o.about||o.desc)}</p>
+ <div style="display:flex;gap:8px">${[['users',o.mem||'1.2k','Members'],['pin','MSEUF',o.loc||'Main Campus'],['cal','Founded',o.founded||'2026']].map(x=>`<div style="flex:1;background:#fff;border-radius:8px;padding:12px 8px;display:flex;gap:7px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.1)">${ic(x[0],16,'#a31f1f',1.6)}<div style="font-size:9px;color:#a31f1f;min-width:0"><b style="font-size:11.5px;display:block">${x[1]}</b>${x[2]}</div></div>`).join('')}</div>
+ <div class="sec" style="margin:16px 0 8px">${ic('check',15,'#a31f1f',2.5).replace('M5 12.500l4.500 4.500L19 7.500','M12 3l2.600 5.600 6 .8-4.400 4.200 1.100 6L12 16.700 6.700 19.600l1.100-6L3.400 9.400l6-.8z')}Highlights</div><div style="display:flex;gap:10px">${(o.hl||['Leadership','Events','Community']).map(h=>`<div style="flex:1;height:104px;background:#fdeaea;border-radius:10px;border:1px solid #f0c9c9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;font-size:10.5px;color:#a31f1f;font-weight:600;text-align:center;padding:0 4px">${ic('grad',24,'#a31f1f',1.5)}${h}</div>`).join('')}</div>`;
  
  if(tab==='Officers'){
   const offList=o.officers||[];
@@ -689,14 +697,14 @@ V.orgd=({id,tab='Overview'}={})=>{
     <div class="sec">${ic('org',18,'#a31f1f',1.6)}Officers</div>
     ${isAdmin?`<button data-act="open-add-officer" data-oid="${o.id}" style="font-size:9px;color:#c42b2b;font-weight:700;display:flex;gap:4px;align-items:center;cursor:pointer">${ic('plain',12,'#c42b2b',2)} Add Officer</button>`:''}
   </div>
-  <div style="font-size:8px;color:#888;margin:2px 0 10px">${isAdmin?'You are Page Admin. Manage officers and grant edit permissions below:':'Meet the leaders of our organization'}</div>
-  ${offList.map((x,i)=>`<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;background:#fff;padding:8px 10px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-    <img src="${x.av||A('profile.jpg')}" style="width:30px;height:30px;border-radius:50%;object-fit:cover">
+  <div style="font-size:10.5px;color:#777;margin:3px 0 12px">${isAdmin?'You are Page Admin. Manage officers and grant edit permissions below:':'Meet the leaders of our organization'}</div>
+  ${offList.map((x,i)=>`<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;background:#fff;padding:12px 14px;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+    <img src="${x.av||A('profile.jpg')}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none">
     <div style="flex:1">
-      <div style="display:flex;align-items:center;gap:6px"><b style="font-size:10.5px;color:#a31f1f">${esc(x.name)}</b>${x.canEdit?`<span style="font-size:7px;padding:1px 5px;background:#ffdcdc;color:#c42b2b;border-radius:4px;font-weight:600">Can Edit</span>`:''}</div>
-      <div style="font-size:8px;color:#666">${esc(x.role)}</div>
+      <div style="display:flex;align-items:center;gap:6px"><b style="font-size:14px;color:#a31f1f">${esc(x.name)}</b>${x.canEdit?`<span style="font-size:9px;padding:2px 6px;background:#ffdcdc;color:#c42b2b;border-radius:4px;font-weight:600">Can Edit</span>`:''}</div>
+      <div style="font-size:11px;color:#666;margin-top:2px">${esc(x.role)}</div>
     </div>
-    ${isAdmin?`<button data-act="toggle-officer-perm" data-oid="${o.id}" data-idx="${i}" style="font-size:7.5px;padding:3px 8px;border-radius:10px;background:${x.canEdit?'#c42b2b':'#e0e0e0'};color:${x.canEdit?'#fff':'#666'};font-weight:700;cursor:pointer" title="Admin: Toggle edit access">${x.canEdit?'Edit: ON':'Edit: OFF'}</button>`:''}
+    ${isAdmin?`<button data-act="toggle-officer-perm" data-oid="${o.id}" data-idx="${i}" style="font-size:9.5px;padding:5px 10px;border-radius:12px;background:${x.canEdit?'#c42b2b':'#e0e0e0'};color:${x.canEdit?'#fff':'#666'};font-weight:700;cursor:pointer" title="Admin: Toggle edit access">${x.canEdit?'Edit: ON':'Edit: OFF'}</button>`:''}
   </div>`).join('')||'<div style="text-align:center;padding:30px;font-size:10px;color:#888">No officers assigned yet</div>'}`;
  }
 
@@ -706,12 +714,12 @@ V.orgd=({id,tab='Overview'}={})=>{
     <div class="sec">${ic('doc',17,'#a31f1f',1.6)}Requirements to Join</div>
     ${isOfficer?`<button data-act="open-edit-reqs" data-oid="${o.id}" style="font-size:9px;color:#c42b2b;font-weight:700;display:flex;gap:4px;align-items:center;cursor:pointer">${ic('pen',12,'#c42b2b',2)} Edit Requirements</button>`:''}
   </div>
-  <div style="font-size:8px;color:#888;margin:2px 0 10px">Be part of ${esc(o.short)} and make a difference!</div>
-  ${reqList.map(r=>`<div style="display:flex;gap:9px;align-items:center;background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:8.5px;color:#a31f1f;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.1)"><span style="width:16px;height:16px;border-radius:50%;background:#c42b2b;display:grid;place-items:center;flex:none">${ic('check',10,'#fff',3.5)}</span>${esc(r)}</div>`).join('')}
-  <div class="sec" style="font-size:10px;margin-top:8px">${ic('doc',13,'#a31f1f',1.6)}Application Form</div>
-  <div style="background:#fff;border-radius:8px;padding:8px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,.1)"><div style="display:flex;gap:8px;align-items:center;font-size:8px;color:#a31f1f"><span style="width:22px;height:26px;background:#fde0e0;border-radius:4px;display:grid;place-items:center">${ic('doc',14,'#c42b2b',1.5)}</span><div><b>Application Form</b><br><span style="color:#999">PDF • 158 KB</span></div></div><button data-act="dl" style="width:100%;height:20px;margin-top:6px;border-radius:5px;background:#b42222;color:#fff;font-size:8px;font-weight:600">⬇ Download</button></div>
-  <div class="sec" style="font-size:10px">${ic('cal',13,'#a31f1f',1.6)}Application Period</div>
-  <div style="background:#fff;border-radius:8px;padding:7px 10px;margin-top:6px;font-size:8.5px;color:#a31f1f;font-weight:600">${esc(o.period||'Sept 1 - Sept 30, 2025')}<div style="color:#999;font-weight:400;font-size:7px">12:00 AM - 11:59 PM</div></div>`;
+  <div style="font-size:10.5px;color:#777;margin:3px 0 12px">Be part of ${esc(o.short)} and make a difference!</div>
+  ${reqList.map(r=>`<div style="display:flex;gap:9px;align-items:center;background:#fff;border-radius:8px;padding:12px 12px;margin-bottom:10px;font-size:11.5px;line-height:1.35;color:#a31f1f;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.1)"><span style="width:20px;height:20px;border-radius:50%;background:#c42b2b;display:grid;place-items:center;flex:none">${ic('check',10,'#fff',3.5)}</span>${esc(r)}</div>`).join('')}
+  <div class="sec" style="font-size:13px;margin-top:14px">${ic('doc',13,'#a31f1f',1.6)}Application Form</div>
+  <div style="background:#fff;border-radius:10px;padding:12px;margin:8px 0 12px;box-shadow:0 1px 3px rgba(0,0,0,.1)"><div style="display:flex;gap:10px;align-items:center;font-size:11px;color:#a31f1f"><span style="width:30px;height:36px;background:#fde0e0;border-radius:4px;display:grid;place-items:center">${ic('doc',14,'#c42b2b',1.5)}</span><div><b>Application Form</b><br><span style="color:#999">PDF • 158 KB</span></div></div><button data-act="dl" style="width:100%;height:30px;margin-top:10px;border-radius:8px;background:#b42222;color:#fff;font-size:11px;font-weight:600;cursor:pointer">⬇ Download</button></div>
+  <div class="sec" style="font-size:13px;margin-top:6px">${ic('cal',13,'#a31f1f',1.6)}Application Period</div>
+  <div style="background:#fff;border-radius:10px;padding:11px 12px;margin-top:8px;font-size:12px;color:#a31f1f;font-weight:600">${esc(o.period||'Sept 1 - Sept 30, 2025')}<div style="color:#999;font-weight:400;font-size:9.5px;margin-top:2px">12:00 AM - 11:59 PM</div></div>`;
  }
 
  if(tab==='Activities'){
@@ -720,14 +728,14 @@ V.orgd=({id,tab='Overview'}={})=>{
     <div class="sec">${ic('megaphone',17,'#a31f1f',1.6)}Activities</div>
     ${isOfficer?`<button data-act="open-add-act" data-oid="${o.id}" style="font-size:9px;color:#c42b2b;font-weight:700;display:flex;gap:4px;align-items:center;cursor:pointer">${ic('plain',12,'#c42b2b',2)} Add Activity</button>`:''}
   </div>
-  <div style="font-size:8px;color:#888;margin:2px 0 10px">Stay updated with our latest announcements, events, and activities.</div>
-  ${actList.map((a,i)=>`<div style="background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.1);position:relative">
+  <div style="font-size:10.5px;color:#777;margin:3px 0 12px">Stay updated with our latest announcements, events, and activities.</div>
+  ${actList.map((a,i)=>`<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.1);position:relative">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:7.5px;color:#666;font-weight:600">${esc(a[0])}</div>
+      <div style="font-size:10px;color:#666;font-weight:600">${esc(a[0])}</div>
       ${isOfficer?`<button data-act="del-act" data-oid="${o.id}" data-idx="${i}" style="color:#c42b2b;font-size:11px;cursor:pointer" title="Delete Activity">✕</button>`:''}
     </div>
-    <div style="font-size:9.5px;font-weight:700;margin:3px 0;color:#000">${esc(a[1])}</div>
-    <div style="font-size:7.5px;color:#999;line-height:1.3">${esc(a[2])}</div>
+    <div style="font-size:13px;font-weight:700;margin:4px 0;color:#000">${esc(a[1])}</div>
+    <div style="font-size:10.5px;color:#888;line-height:1.4">${esc(a[2])}</div>
   </div>`).join('')||'<div style="text-align:center;padding:30px;font-size:10px;color:#888">No activities listed yet</div>'}`;
  }
 
@@ -741,21 +749,21 @@ V.orgd=({id,tab='Overview'}={})=>{
  }
 
  return `<div class="screen">${bgLayer()}${statusBar}
- <div style="position:absolute;left:0;top:0;width:402px;height:224px;overflow:hidden;z-index:1">
-   <img src="${o.cover||A('sus.jpg')}" data-act="view-img" data-img="${o.cover||A('sus.jpg')}" data-caption="${esc(o.name)} Cover Photo" style="width:100%;height:100%;object-fit:cover;filter:brightness(.65);cursor:pointer">
-   <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(70,15,15,.25) 50%,#460f0f 100%)"></div>
+ <div style="position:absolute;left:0;top:0;width:402px;height:232px;overflow:hidden;z-index:1">
+   <img src="${o.cover||A('sus.jpg')}" data-act="view-img" data-img="${o.cover||A('sus.jpg')}" data-caption="${esc(o.name)} Cover Photo" style="width:100%;height:100%;object-fit:cover;filter:brightness(.5);cursor:pointer">
+   <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(70,15,15,.45) 55%,#460f0f 100%)"></div>
  </div>
  <button class="back" data-back style="z-index:5">${ic('back',22,'#fff',1.8)}</button>
- <div class="ptitle" style="z-index:5">Organization</div>
- <img src="${o.logo}" data-act="view-img" data-img="${o.logo}" data-caption="${esc(o.name)} Logo" style="position:absolute;left:44px;top:115px;width:66px;height:66px;border-radius:50%;object-fit:cover;background:#fff;z-index:2;box-shadow:0 3px 8px rgba(0,0,0,.4);cursor:pointer">
- <div style="position:absolute;left:120px;top:118px;width:240px;z-index:2">
-   <div style="font-size:16px;font-weight:700;line-height:1.15;text-shadow:0 1px 3px rgba(0,0,0,.6)">${esc(o.name)}</div>
-   <div style="font-size:9px;color:rgba(255,255,255,.9);margin-top:3px">${o.type} Organization</div>
-   <div style="font-size:8px;margin-top:3px;color:rgba(255,255,255,.9)">${ic('users',10,'#fff',1.6)} ${o.mem} Members</div>
+ <div class="ptitle" style="z-index:5;top:66px">Organization</div>
+ <img src="${o.logo}" data-act="view-img" data-img="${o.logo}" data-caption="${esc(o.name)} Logo" style="position:absolute;left:30px;top:122px;width:72px;height:72px;border-radius:50%;object-fit:cover;background:#fff;z-index:2;box-shadow:0 3px 8px rgba(0,0,0,.4);cursor:pointer">
+ <div style="position:absolute;left:116px;top:124px;width:252px;z-index:2">
+   <div style="font-size:17px;font-weight:700;line-height:1.18;text-shadow:0 1px 4px rgba(0,0,0,.7)">${esc(o.name)}</div>
+   <div style="font-size:11px;color:rgba(255,255,255,.95);margin-top:5px">${o.type} Organization</div>
+   <div style="font-size:10.5px;margin-top:4px;color:rgba(255,255,255,.95)">${ic('users',10,'#fff',1.6)} ${o.mem} Members</div>
  </div>
- <div class="sheetcard lg" style="top:224px;height:640px;border-radius:30px 30px 0 0;background:rgba(255,235,235,.55);z-index:2"></div>
- <div class="tabbar" style="position:absolute;left:30px;right:30px;top:238px;margin:0;z-index:3;background:rgba(255,255,255,.92)">${tabs.map(t=>`<button class="${t===tab?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div>
- <div class="scroll" style="top:274px;bottom:84px;padding:6px 30px;color:#000;z-index:3">${body}</div>
+ <div class="sheetcard lg" style="top:232px;height:632px;border-radius:30px 30px 0 0;background:rgba(255,235,235,.55);z-index:2"></div>
+ <div class="tabbar" style="position:absolute;left:30px;right:30px;top:248px;margin:0;z-index:3;background:rgba(255,255,255,.92)">${tabs.map(t=>`<button class="${t===tab?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div>
+ <div class="scroll" style="top:292px;bottom:92px;padding:6px 26px 28px;color:#000;z-index:3">${body}</div>
  ${actionBtn}
  </div>`;
 };
@@ -1122,132 +1130,284 @@ function openCreateMenu(){
  const ov=$('#ov');
  ov.querySelectorAll('[data-close]').forEach(e=>e.onclick=closeOv);
  $('[data-act=open-cpost]').onclick=()=>openNewPost();
- $('[data-act=open-cpage]').onclick=()=>openCreatePage();
+ $('[data-act=open-cpage]').onclick=()=>{closeOv();go('pages')};
 }
 
-/* 3. Create Page / Organization */
-function openCreatePage(){
- let logoImg=null,coverImg=null;
- const draw=(keep)=>{
-  const n=keep?$('#cp-name').value:'';
-  const s=keep?$('#cp-short').value:'';
-  const t=keep?$('#cp-type').value:'University';
-  const d=keep?($('#cp-dept')?$('#cp-dept').value:'CCMS'):'CCMS';
-  const ds=keep?$('#cp-desc').value:'';
-  const ab=keep?$('#cp-about').value:'';
-  overlay(`<div class="dim" data-close></div>
-  <div class="sheet sheetcard lg" style="height:670px;background:rgba(255,235,235,.6);backdrop-filter:blur(26px);color:#000;padding:0 20px;border-radius:36px 36px 0 0;box-shadow:inset 0 0 20px rgba(255,255,255,.6),inset 0 0 0 1px #fff;display:flex;flex-direction:column">
-   <div style="width:42px;height:4px;border-radius:3px;background:#999;margin:8px auto 0"></div>
-   <div style="text-align:center;color:#c42b2b;font-size:15px;font-weight:700;margin-top:10px;position:relative">
-     Create Organization Page
-     <span data-close style="position:absolute;right:0;top:-2px;font-size:20px;cursor:pointer;font-weight:400">✕</span>
+/* 3. Pages (Your pages -> Create -> Dashboard -> Invite / People & access / Settings)
+   Prototype data: lives in memory and resets on refresh. */
+const PAGE_CATS=['Arts & Community','Organization','Academic & Study','Sports & Fitness','Social & Hobbies','Events','Business & Marketplace','Other'];
+const PG_PEOPLE=[
+ {id:'juan',name:'Juan Dela Cruz',sub:'Student · UNICOM',av:A('user2.jpg')},
+ {id:'maria',name:'Maria Santos',sub:'Student · UNICOM',av:A('user5.jpg')},
+ {id:'kristel',name:'Kristel Reyes',sub:'Student · UNICOM',av:A('user4.jpg')},
+ {id:'angela',name:'Angela Garcia',sub:'Student · UNICOM',av:A('user3.jpg')},
+ {id:'carlos',name:'Carlos Mendoza',sub:'Student · UNICOM',av:A('profile2.jpg')}
+];
+let PAGES=[];
+let PG_SEQ=1;
+const pgById=id=>PAGES.find(x=>x.id===id);
+
+const PGM='#8a1c1c';
+const PGCARD='background:#fff;color:#000;border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,.18)';
+const PGINP='display:block;width:100%;height:40px;border-radius:10px;border:1px solid #dcc8c8;background:#fff;color:#000;padding:0 12px;font-size:13px;margin-bottom:12px';
+const PGBTN='position:absolute;left:22px;right:22px;bottom:34px;width:auto;height:44px;font-size:14px;z-index:10';
+const pgLab=t=>`<div style="font-size:10.5px;font-weight:700;color:${PGM};margin:0 0 6px 2px">${t}</div>`;
+const pgHead=t=>`<button class="back" data-back>${ic('back',22,'#fff',1.8)}</button><div class="ptitle" style="font-size:16px">${t}</div>`;
+const pgAv=(p,s=56,r='16px')=>p.photo
+ ?`<img src="${p.photo}" style="width:${s}px;height:${s}px;border-radius:${r};object-fit:cover;background:#fff;flex:none;display:block">`
+ :`<div style="width:${s}px;height:${s}px;border-radius:${r};background:linear-gradient(135deg,#c24a4a,#7a1a1a);color:#fff;display:grid;place-items:center;font-weight:700;font-size:${Math.round(s*.42)}px;flex:none">${esc((p.name||'?').trim().charAt(0).toUpperCase())}</div>`;
+const pgCover=(p,h)=>p.cover
+ ?`<img src="${p.cover}" style="width:100%;height:${h}px;object-fit:cover;display:block">`
+ :`<div style="height:${h}px;background:linear-gradient(135deg,#8f2a2a,#3d0d0d 85%)"></div>`;
+const pgPerson=(x,sub)=>`<img src="${x.av||A('profile.jpg')}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex:none"><div style="flex:1;min-width:0"><b style="font-size:13px;display:block">${esc(x.name)}</b><div style="font-size:10.5px;color:#777;margin-top:1px">${esc(sub)}</div></div>`;
+
+/* --- Your pages --- */
+V.pages=()=>{
+ const mine=PAGES.filter(x=>x.ownerId===ME.id);
+ const info=[['doc','A page that feels like you','Add a name, photo, and a short introduction.'],['users','Invite your community','Choose members and send invitations.'],['gear','Stay in control','Manage page access and invitation permissions.']];
+ const empty=`<div style="${PGCARD};overflow:hidden">
+   <img src="${A('commision.png')}" style="width:100%;height:170px;object-fit:cover;object-position:center 20%;display:block;background:#d9d9d9">
+   <div style="padding:16px 18px 18px"><div style="font-size:19px;font-weight:700;color:${PGM}">Bring your people together</div>
+   <div style="font-size:12px;color:#444;line-height:1.4;margin-top:8px">Create a page for your club, creative work, or campus community.</div></div></div>
+  <div style="margin-top:22px;display:flex;flex-direction:column;gap:20px">${info.map(r=>`<div style="display:flex;gap:14px;align-items:center"><span style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;flex:none">${ic(r[0],20,'#fff',1.5)}</span><div><b style="font-size:13.5px;display:block">${r[1]}</b><span style="font-size:11px;opacity:.8">${r[2]}</span></div></div>`).join('')}</div>`;
+ const list=mine.map(p=>`<div data-act="pg-open" data-id="${p.id}" style="${PGCARD};overflow:hidden;margin-bottom:14px;cursor:pointer">
+   ${pgCover(p,72)}
+   <div style="display:flex;gap:12px;align-items:center;padding:0 14px 14px"><div style="margin-top:-22px;border:3px solid #fff;border-radius:17px;background:#fff;flex:none">${pgAv(p,50,'14px')}</div>
+   <div style="flex:1;min-width:0;padding-top:8px"><b style="font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</b><span style="font-size:10.5px;color:#777">${esc(p.cat)} · ${p.visibility}</span></div>${ic('chev',16,'#999',1.8)}</div></div>`).join('');
+ return `<div class="screen">${bgLayer()}${statusBar}${pgHead('Your pages')}
+ <div class="scroll" style="top:112px;bottom:96px;padding:6px 22px 24px">${mine.length?`<div style="font-size:12px;opacity:.85;margin:0 2px 12px">Pages you own</div>${list}`:empty}</div>
+ <button class="btn" data-act="pg-create" style="${PGBTN}">＋ Create a page</button></div>`;
+};
+B.pages=()=>{
+ $('[data-act=pg-create]').onclick=()=>go('pcreate');
+ phone.querySelectorAll('[data-act=pg-open]').forEach(el=>el.onclick=()=>go('pdash',{id:el.dataset.id}));
+};
+
+/* --- Create a page --- */
+V.pcreate=()=>`<div class="screen">${bgLayer()}${statusBar}${pgHead('Create a page')}
+ <div class="scroll" style="top:112px;bottom:96px;padding:4px 22px 24px">
+  <div style="font-size:21px;font-weight:700;line-height:1.2;margin:6px 2px 16px">Give your community a home.</div>
+  <div style="${PGCARD};padding:16px">
+   <div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">
+    <label style="cursor:pointer;flex:none"><div id="pg-photo-tile" style="width:68px;height:68px;border-radius:16px;background:#f3e3e3;display:grid;place-items:center;overflow:hidden">${ic('camera',26,PGM,1.5)}</div><input id="pg-photo-input" type="file" accept="image/*" hidden></label>
+    <div><b style="font-size:13.5px">Page photo</b><div style="font-size:10.5px;color:#777;margin-top:3px;line-height:1.3">A recognizable image for your community.</div></div>
    </div>
-   <div class="scroll" style="position:static;flex:1;overflow-y:auto;padding:12px 0 16px">
-     <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Organization Name</div>
-     <div class="field" style="height:34px;border-radius:8px;background:#fff;margin-bottom:10px;padding:0 12px"><input id="cp-name" placeholder="e.g. MSEUF Coding Society" value="${esc(n)}" style="font-size:10px"></div>
-     
-     <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Short Code / Acronym</div>
-     <div class="field" style="height:34px;border-radius:8px;background:#fff;margin-bottom:10px;padding:0 12px"><input id="cp-short" placeholder="e.g. CodeSoc" value="${esc(s)}" style="font-size:10px"></div>
-
-     <div style="display:flex;gap:10px;margin-bottom:10px">
-       <div style="flex:1">
-         <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Type</div>
-         <select id="cp-type" style="width:100%;height:34px;border-radius:8px;background:#fff;padding:0 8px;font-size:10px;color:#333">
-           <option value="University" ${t==='University'?'selected':''}>University</option>
-           <option value="Department" ${t==='Department'?'selected':''}>Department</option>
-         </select>
-       </div>
-       <div style="flex:1" id="dept-wrap">
-         <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Department</div>
-         <select id="cp-dept" style="width:100%;height:34px;border-radius:8px;background:#fff;padding:0 8px;font-size:10px;color:#333">
-           ${['CCMS','CHTM','CBA','CAS','CEA'].map(x=>`<option value="${x}" ${d===x?'selected':''}>${x}</option>`).join('')}
-         </select>
-       </div>
-     </div>
-
-     <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">Short Description</div>
-     <div class="field" style="height:34px;border-radius:8px;background:#fff;margin-bottom:10px;padding:0 12px"><input id="cp-desc" placeholder="Brief summary of the organization..." value="${esc(ds)}" style="font-size:10px"></div>
-
-     <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:4px">About & Mission</div>
-     <textarea id="cp-about" placeholder="Tell students about what your organization does..." style="width:100%;height:58px;border-radius:8px;padding:8px 10px;font-size:10px;resize:none;background:#fff;color:#000;margin-bottom:12px">${esc(ab)}</textarea>
-
-     <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:6px">Organization Logo</div>
-     ${logoImg?`<div style="position:relative;width:100%;height:80px;border-radius:8px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:10px">
-       <img src="${logoImg}" style="max-height:100%;max-width:100%;object-fit:contain">
-       <button data-act="del-logo" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700">✕</button>
-       <label style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.65);color:#fff;padding:3px 8px;border-radius:12px;font-size:8px;cursor:pointer">${ic('photo',12,'#fff')} Replace<input id="cp-logo-change" type="file" accept="image/*" hidden></label>
-     </div>`:`<label style="display:flex;gap:8px;align-items:center;height:34px;background:#fff;border-radius:8px;padding:0 12px;font-size:10px;color:#666;cursor:pointer;margin-bottom:10px">${ic('photo',16,'#666')} Add Logo Image<input id="cp-logo" type="file" accept="image/*" hidden></label>`}
-
-     <div style="font-size:9px;font-weight:700;color:#555;margin-bottom:6px">Cover Photo</div>
-     ${coverImg?`<div style="position:relative;width:100%;height:90px;border-radius:8px;overflow:hidden;background:#222;display:flex;align-items:center;justify-content:center;margin-bottom:10px">
-       <img src="${coverImg}" style="width:100%;height:100%;object-fit:cover">
-       <button data-act="del-cover" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700">✕</button>
-       <label style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.65);color:#fff;padding:3px 8px;border-radius:12px;font-size:8px;cursor:pointer">${ic('photo',12,'#fff')} Replace<input id="cp-cover-change" type="file" accept="image/*" hidden></label>
-     </div>`:`<label style="display:flex;gap:8px;align-items:center;height:34px;background:#fff;border-radius:8px;padding:0 12px;font-size:10px;color:#666;cursor:pointer;margin-bottom:10px">${ic('photo',16,'#666')} Add Cover Photo<input id="cp-cover" type="file" accept="image/*" hidden></label>`}
-
-     <button class="btn soft" data-sub-page style="height:36px;font-size:13px;margin-top:6px">Create Page</button>
-   </div>
-  </div>`);
-
-  const ov=$('#ov');
-  ov.querySelectorAll('[data-close]').forEach(e=>e.onclick=closeOv);
-  const lIn=$('#cp-logo');if(lIn)lIn.onchange=e=>{if(e.target.files[0]){logoImg=URL.createObjectURL(e.target.files[0]);draw(1)}};
-  const lcIn=$('#cp-logo-change');if(lcIn)lcIn.onchange=e=>{if(e.target.files[0]){logoImg=URL.createObjectURL(e.target.files[0]);draw(1)}};
-  const dLog=$('[data-act=del-logo]');if(dLog)dLog.onclick=()=>{logoImg=null;draw(1)};
-
-  const cIn=$('#cp-cover');if(cIn)cIn.onchange=e=>{if(e.target.files[0]){coverImg=URL.createObjectURL(e.target.files[0]);draw(1)}};
-  const ccIn=$('#cp-cover-change');if(ccIn)ccIn.onchange=e=>{if(e.target.files[0]){coverImg=URL.createObjectURL(e.target.files[0]);draw(1)}};
-  const dCov=$('[data-act=del-cover]');if(dCov)dCov.onclick=()=>{coverImg=null;draw(1)};
-
-  $('[data-sub-page]').onclick=()=>{
-   const nameVal=$('#cp-name').value.trim();
-   const shortVal=$('#cp-short').value.trim();
-   const typeVal=$('#cp-type').value;
-   const deptVal=$('#cp-dept')?$('#cp-dept').value:'CCMS';
-   const descVal=$('#cp-desc').value.trim();
-   const aboutVal=$('#cp-about').value.trim();
-
-   if(!nameVal)return toast('Please enter organization name');
-   if(!shortVal)return toast('Please enter short acronym');
-
-   const newId='org_'+Date.now();
-   const newOrg={
-    id:newId,
-    name:nameVal,
-    short:shortVal,
-    type:typeVal,
-    dept:typeVal==='Department'?deptVal:undefined,
-    logo:logoImg||A('uscss.jpg'),
-    cover:coverImg||A('sus.jpg'),
-    mem:'1',
-    desc:descVal||'Promoting student participation, leadership, and campus community.',
-    about:aboutVal||descVal||('Welcome to '+nameVal+'. Official student organization at MSEUF.'),
-    founded:'2026',
-    loc:'MSEUF Main Campus',
-    hl:['Leadership','Events','Community'],
-    period:'Open Year-round',
-    creatorId:ME.id,
-    creatorName:ME.name,
-    admins:[ME.id],
-    officers:[
-     {name:ME.name,role:'Founder & Admin',av:ME.av,canEdit:true,id:ME.id}
-    ],
-    reqs:[
-     'Must be a currently enrolled MSEUF student.',
-     'Willing to participate in organization activities and general assemblies.'
-    ],
-    acts:[
-     [shortVal+' Official','Welcome to '+nameVal,'We are officially open for new members! Stay tuned for upcoming activities and events.']
-    ]
-   };
-   ORGS.unshift(newOrg);
-   closeOv();
-   toast('Organization Page created! You are the Admin.');
-   go('orgd',{id:newId});
-  };
+   ${pgLab('Page name')}<input id="pg-name" maxlength="60" placeholder="e.g. Campus Creatives" style="${PGINP}">
+   ${pgLab('Category')}<select id="pg-cat" style="${PGINP}"><option value="" selected disabled hidden>Select a category...</option>${PAGE_CATS.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select>
+   ${pgLab('About your page')}<textarea id="pg-about" maxlength="300" placeholder="Tell people what your page is about..." style="${PGINP};height:88px;padding:10px 12px;resize:none"></textarea>
+   ${pgLab('Page visibility')}<div style="font-size:13px;font-weight:600">Private</div><div style="font-size:10.5px;color:#777;margin-top:2px">Manage visibility in Page settings.</div>
+  </div>
+  <div style="text-align:center;font-size:10.5px;opacity:.85;margin-top:12px">You'll become the page owner.</div>
+ </div>
+ <button class="btn" data-act="pg-submit" style="${PGBTN}">Create page</button></div>`;
+B.pcreate=()=>{
+ S.pgPhoto='';
+ $('#pg-photo-input').onchange=e=>{
+  const f=e.target.files[0];
+  if(f){S.pgPhoto=URL.createObjectURL(f);$('#pg-photo-tile').innerHTML=`<img src="${S.pgPhoto}" style="width:100%;height:100%;object-fit:cover">`}
  };
- draw();
-}
+ $('[data-act=pg-submit]').onclick=()=>{
+  const name=$('#pg-name').value.trim();
+  const cat=$('#pg-cat').value;
+  const about=$('#pg-about').value.trim();
+  if(!name)return toast('Please enter a page name');
+  if(!cat)return toast('Please choose a category');
+  const pg={id:'pg'+(PG_SEQ++),name,cat,about,photo:S.pgPhoto||'',cover:'',visibility:'Private',invitePerm:'Admins only',
+   ownerId:ME.id,members:[{id:ME.id,name:ME.name,role:'Owner',av:ME.av}],invites:[]};
+  PAGES.push(pg);
+  toast('Page created');
+  go('pdash',{id:pg.id},true);
+ };
+};
+
+/* --- Page dashboard --- */
+V.pdash=({id}={})=>{
+ const p=pgById(id);
+ if(!p)return `<div class="screen">${bgLayer()}${statusBar}${pgHead('Page dashboard')}</div>`;
+ const n=p.members.length;
+ const rows=[['pg-invite','Invite members','Grow your page community'],['pg-people','People & access',p.invites.length?`${p.invites.length} pending · members and roles`:'Members, roles, and pending invites'],['pg-settings','Page settings','Visibility and invitation permissions']];
+ return `<div class="screen">${bgLayer()}${statusBar}${pgHead('Page dashboard')}
+ <div class="scroll" style="top:112px;bottom:96px;padding:4px 22px 24px">
+  <div style="${PGCARD};overflow:hidden">
+   <div style="position:relative">${pgCover(p,150)}
+    <label style="position:absolute;right:10px;top:10px;display:flex;gap:5px;align-items:center;background:rgba(0,0,0,.45);color:#fff;border-radius:14px;padding:5px 10px;font-size:10.5px;font-weight:600;cursor:pointer">${ic('camera',13,'#fff',1.8)} Cover<input id="pg-cover-input" type="file" accept="image/*" hidden></label>
+   </div>
+   <div style="padding:0 16px 16px;position:relative">
+    <label style="position:absolute;left:16px;top:-32px;cursor:pointer;border:3px solid #fff;border-radius:19px;background:#fff;display:block">${pgAv(p,66,'16px')}<input id="pg-av-input" type="file" accept="image/*" hidden></label>
+    <div style="margin-left:92px;padding-top:8px;min-height:30px"><span style="font-size:8.5px;font-weight:800;letter-spacing:.6px;color:${PGM}">PAGE OWNER</span></div>
+    <div style="font-size:19px;font-weight:700;margin-top:14px">${esc(p.name)}</div>
+    <div style="font-size:11px;color:#777;margin-top:2px">${esc(p.cat)}</div>
+    <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:11.5px"><b style="color:${PGM}">${p.visibility}</b><span style="color:#555">${n} member${n>1?'s':''}${n===1?' · you':''}</span></div>
+   </div>
+  </div>
+  <div style="${PGCARD};margin-top:14px">${rows.map((r,i)=>`<div data-act="${r[0]}" style="display:flex;align-items:center;padding:14px 16px;cursor:pointer;${i?'border-top:1px solid #eee':''}"><div style="flex:1"><b style="font-size:13.5px;display:block">${r[1]}</b><span style="font-size:10.5px;color:#777">${r[2]}</span></div>${ic('chev',16,'#999',1.8)}</div>`).join('')}</div>
+  ${n===1&&!p.invites.length?`<div style="${PGCARD};margin-top:14px;padding:14px 16px"><b style="font-size:13px;color:${PGM};display:block">Make the first connection</b><div style="font-size:11px;color:#555;line-height:1.4;margin-top:4px">Invite people you know. They'll become members after accepting your invitation.</div></div>`:''}
+ </div>
+ <button class="btn" data-act="pg-invite-cta" style="${PGBTN}">＋ Invite members</button></div>`;
+};
+B.pdash=({id})=>{
+ const p=pgById(id);
+ if(!p)return;
+ const open=()=>{S.pgSel=new Set();go('pinvite',{id})};
+ $('[data-act=pg-invite]').onclick=open;
+ $('[data-act=pg-invite-cta]').onclick=open;
+ $('[data-act=pg-people]').onclick=()=>go('ppeople',{id});
+ $('[data-act=pg-settings]').onclick=()=>go('pset',{id});
+ $('#pg-av-input').onchange=e=>{const f=e.target.files[0];if(f){p.photo=URL.createObjectURL(f);render()}};
+ $('#pg-cover-input').onchange=e=>{const f=e.target.files[0];if(f){p.cover=URL.createObjectURL(f);render()}};
+};
+
+/* --- Invite members --- */
+V.pinvite=({id}={})=>{
+ const p=pgById(id);
+ if(!p)return `<div class="screen">${bgLayer()}${statusBar}${pgHead('Invite members')}</div>`;
+ const taken=new Set([...p.members.map(m=>m.id),...p.invites.map(i=>i.id)]);
+ const people=PG_PEOPLE.filter(x=>!taken.has(x.id));
+ return `<div class="screen">${bgLayer()}${statusBar}${pgHead('Invite members')}
+ <div class="scroll" style="top:112px;bottom:96px;padding:4px 22px 24px">
+  <div style="font-size:19px;font-weight:700">${esc(p.name)}</div>
+  <div style="font-size:11.5px;opacity:.85;margin:3px 0 12px">Choose people to invite to your page.</div>
+  <div style="display:flex;gap:9px;align-items:center;height:40px;border-radius:12px;background:rgba(255,255,255,.28);padding:0 12px">${ic('search',16,'#fff',1.6)}<input id="pg-q" placeholder="Search people..." style="flex:1;background:none;color:#fff;font-size:13px;min-width:0"></div>
+  <div style="${PGCARD};padding:6px 16px;margin-top:12px">
+   <div style="font-size:10.5px;font-weight:700;color:${PGM};margin:10px 0 4px">People you may know</div>
+   ${people.map(x=>`<div data-pick="${x.id}" data-name="${esc(x.name.toLowerCase())}" style="display:flex;gap:12px;align-items:center;padding:9px 0;cursor:pointer">${pgPerson(x,x.sub)}<span class="pg-box" style="width:22px;height:22px;border-radius:6px;border:1.5px solid ${PGM};display:grid;place-items:center;flex:none"></span></div>`).join('')||'<div style="text-align:center;padding:18px 0;font-size:11.5px;color:#777">Everyone you may know is already invited.</div>'}
+  </div>
+  <div style="${PGCARD};padding:14px 16px;margin-top:14px">
+   ${pgLab('Invite as')}
+   <input type="hidden" id="pg-role" value="Member">
+   <div style="display:flex;gap:10px;margin-bottom:10px">${['Member','Admin'].map(r=>`<button data-role="${r}" style="flex:1;height:38px;border-radius:19px;border:1.5px solid ${PGM};background:${r==='Member'?'#fbeeee':'#fff'};color:${PGM};font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer">${r}${r==='Member'?ic('check',14,PGM,3):''}</button>`).join('')}</div>
+   <div id="pg-role-note" style="font-size:10.5px;color:#777">Members can join conversations without admin access.</div>
+  </div>
+ </div>
+ <button class="btn" data-act="pg-send" style="${PGBTN}">Send invitations</button></div>`;
+};
+B.pinvite=({id})=>{
+ const p=pgById(id);
+ if(!p)return;
+ if(!S.pgSel)S.pgSel=new Set();
+ phone.querySelectorAll('[data-pick]').forEach(row=>row.onclick=()=>{
+  const k=row.dataset.pick,on=!S.pgSel.has(k);
+  if(on)S.pgSel.add(k);else S.pgSel.delete(k);
+  const b=row.querySelector('.pg-box');
+  b.style.background=on?PGM:'transparent';
+  b.innerHTML=on?ic('check',14,'#fff',3):'';
+ });
+ $('#pg-q').oninput=e=>{
+  const q=e.target.value.trim().toLowerCase();
+  phone.querySelectorAll('[data-pick]').forEach(r=>r.style.display=r.dataset.name.includes(q)?'flex':'none');
+ };
+ phone.querySelectorAll('[data-role]').forEach(btn=>btn.onclick=()=>{
+  const r=btn.dataset.role;
+  $('#pg-role').value=r;
+  phone.querySelectorAll('[data-role]').forEach(x=>{
+   const on=x.dataset.role===r;
+   x.style.background=on?'#fbeeee':'#fff';
+   x.innerHTML=x.dataset.role+(on?ic('check',14,PGM,3):'');
+  });
+  $('#pg-role-note').textContent=r==='Admin'?'Admins can edit the page and manage people.':'Members can join conversations without admin access.';
+ });
+ $('[data-act=pg-send]').onclick=()=>{
+  const chosen=PG_PEOPLE.filter(x=>S.pgSel.has(x.id));
+  if(!chosen.length)return toast('Pick at least one person to invite');
+  const role=$('#pg-role').value;
+  chosen.forEach(x=>p.invites.push({id:x.id,name:x.name,av:x.av,sub:x.sub,role}));
+  S.pgSent={role,count:chosen.length};
+  S.pgSel=new Set();
+  go('pinvsent',{id},true);
+ };
+};
+
+/* --- Invitations sent --- */
+V.pinvsent=({id}={})=>{
+ const s=S.pgSent||{role:'Member',count:0};
+ return `<div class="screen">${bgLayer()}${statusBar}${pgHead('Invitations sent')}
+ <div style="position:absolute;left:22px;right:22px;top:170px">
+  <div style="${PGCARD};padding:28px 22px 22px;text-align:center">
+   <div style="width:64px;height:64px;border-radius:50%;background:#7d1f1f;display:grid;place-items:center;margin:0 auto 14px">${ic('check',32,'#fff',3)}</div>
+   <div style="font-size:21px;font-weight:700;color:${PGM}">Invitations sent</div>
+   <div style="font-size:12px;color:#444;line-height:1.4;margin:10px 4px 18px">Your invitations are on their way. People become members after accepting.</div>
+   <div style="display:flex;justify-content:space-between;font-size:12px;padding:9px 2px;border-top:1px solid #eee"><span style="color:#555">Invited as</span><b style="color:${PGM}">${esc(s.role)}</b></div>
+   <div style="display:flex;justify-content:space-between;font-size:12px;padding:9px 2px;border-top:1px solid #eee;margin-bottom:16px"><span style="color:#555">People invited</span><b style="color:${PGM}">${s.count}</b></div>
+   <button data-act="pg-pending" style="width:100%;height:40px;border-radius:20px;border:1.5px solid ${PGM};color:${PGM};background:#fff;font-size:12.5px;font-weight:600;cursor:pointer">View pending invitations</button>
+  </div>
+  <div style="text-align:center;font-size:11px;opacity:.85;margin-top:16px">Review or cancel invitations from People &amp; access.</div>
+ </div>
+ <button class="btn" data-act="pg-todash" style="${PGBTN}">Back to page dashboard</button></div>`;
+};
+B.pinvsent=({id})=>{
+ $('[data-act=pg-pending]').onclick=()=>go('ppeople',{id,tab:'Invitations'},true);
+ $('[data-act=pg-todash]').onclick=()=>back();
+};
+
+/* --- People & access --- */
+V.ppeople=({id,tab='Members'}={})=>{
+ const p=pgById(id);
+ if(!p)return `<div class="screen">${bgLayer()}${statusBar}${pgHead('People & access')}</div>`;
+ const n=p.members.length;
+ const roles=[['Owner','Full control of the page and access.'],['Admin','Manage page details, people, and invitations.'],['Member','Join conversations without admin access.']];
+ const members=`<div style="font-size:13px;font-weight:700;color:${PGM};margin-bottom:8px">${n} member${n>1?'s':''}</div>
+  ${p.members.map(m=>`<div style="display:flex;gap:12px;align-items:center;padding:8px 0">${pgPerson(m,m.id===ME.id?`You · Page ${m.role.toLowerCase()}`:m.role)}</div>`).join('')}
+  <div style="font-size:11px;font-weight:700;color:${PGM};margin:14px 0 8px;padding-top:12px;border-top:1px solid #eee">Understand page roles</div>
+  ${roles.map(r=>`<div style="margin-bottom:9px"><b style="font-size:12px;display:block">${r[0]}</b><span style="font-size:10.5px;color:#666">${r[1]}</span></div>`).join('')}`;
+ const invites=p.invites.length?`<div style="font-size:13px;font-weight:700;color:${PGM};margin-bottom:8px">${p.invites.length} pending invitation${p.invites.length>1?'s':''}</div>
+  ${p.invites.map((x,i)=>`<div style="display:flex;gap:10px;align-items:center;padding:8px 0">${pgPerson(x,`${x.role} · Pending`)}
+   <button data-act="pg-accept-inv" data-idx="${i}" title="Prototype only: pretend this person accepted" style="font-size:10px;color:#666;text-decoration:underline;cursor:pointer">Accept (demo)</button>
+   <button data-act="pg-cancel-inv" data-idx="${i}" style="font-size:11px;font-weight:700;color:#c42b2b;border:1px solid #e2b4b4;border-radius:12px;padding:4px 10px;cursor:pointer">Cancel</button></div>`).join('')}`
+  :`<div style="text-align:center;padding:26px 0;font-size:12px;color:#777">No pending invitations.</div>`;
+ return `<div class="screen">${bgLayer()}${statusBar}${pgHead('People & access')}
+ <div class="scroll" style="top:112px;bottom:96px;padding:4px 22px 24px">
+  <div style="font-size:19px;font-weight:700">${esc(p.name)}</div>
+  <div style="font-size:11.5px;opacity:.85;margin:3px 0 12px">Control who belongs to your community.</div>
+  <div style="display:flex;background:#fff;border-radius:14px;margin-bottom:12px">${['Members','Invitations'].map(t=>`<button data-ptab="${t}" style="flex:1;height:40px;font-size:13px;font-weight:${t===tab?700:500};color:${t===tab?PGM:'#555'};border-bottom:2px solid ${t===tab?PGM:'transparent'};cursor:pointer">${t}${t==='Invitations'&&p.invites.length?` (${p.invites.length})`:''}</button>`).join('')}</div>
+  <div style="${PGCARD};padding:14px 16px">${tab==='Members'?members:invites}</div>
+ </div>
+ <button class="btn" data-act="pg-invite-cta" style="${PGBTN}">＋ Invite members</button></div>`;
+};
+B.ppeople=({id})=>{
+ const p=pgById(id);
+ if(!p)return;
+ phone.querySelectorAll('[data-ptab]').forEach(b=>b.onclick=()=>go('ppeople',{id,tab:b.dataset.ptab},true));
+ $('[data-act=pg-invite-cta]').onclick=()=>{S.pgSel=new Set();go('pinvite',{id})};
+ phone.querySelectorAll('[data-act=pg-cancel-inv]').forEach(b=>b.onclick=()=>{p.invites.splice(+b.dataset.idx,1);render()});
+ phone.querySelectorAll('[data-act=pg-accept-inv]').forEach(b=>b.onclick=()=>{
+  const x=p.invites.splice(+b.dataset.idx,1)[0];
+  if(x)p.members.push({id:x.id,name:x.name,role:x.role,av:x.av});
+  render();
+ });
+};
+
+/* --- Page settings --- */
+V.pset=({id}={})=>{
+ const p=pgById(id);
+ if(!p)return `<div class="screen">${bgLayer()}${statusBar}${pgHead('Page settings')}</div>`;
+ const pill=(attr,val,cur)=>`<button ${attr}="${val}" style="flex:1;height:38px;border-radius:19px;border:1.5px solid ${cur===val?PGM:'#dcc0c0'};background:#fff;color:${PGM};font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer">${val}${cur===val?ic('check',14,PGM,3):''}</button>`;
+ return `<div class="screen">${bgLayer()}${statusBar}${pgHead('Page settings')}
+ <div class="scroll" style="top:112px;bottom:96px;padding:4px 22px 24px">
+  <div style="font-size:19px;font-weight:700">${esc(p.name)}</div>
+  <div style="font-size:11.5px;opacity:.85;margin:3px 0 12px">Choose how your community works.</div>
+  <div style="${PGCARD};padding:16px">
+   ${pgLab('Page information')}
+   <b style="font-size:15px;display:block">${esc(p.name)}</b>
+   <div style="font-size:11px;color:#777;margin:2px 0 8px">${esc(p.cat)}</div>
+   <div style="font-size:11.5px;color:#444;line-height:1.4">${esc(p.about)||'<span style="color:#999">No description yet.</span>'}</div>
+   <div style="margin-top:18px">${pgLab('Page visibility')}</div>
+   <div style="display:flex;gap:10px">${pill('data-vis','Private',p.visibility)}${pill('data-vis','Public',p.visibility)}</div>
+   <div style="font-size:10.5px;color:#777;line-height:1.4;margin-top:8px">Private: only members can see posts.<br>Public: anyone can view the page.</div>
+   <div style="margin-top:18px">${pgLab('Who can invite people?')}</div>
+   <div style="display:flex;gap:10px">${pill('data-inv','Admins only',p.invitePerm)}${pill('data-inv','All members',p.invitePerm)}</div>
+   <div style="font-size:10.5px;color:#777;margin-top:8px">Owners and admins always control page access.</div>
+  </div>
+  <div style="text-align:center;font-size:10.5px;opacity:.85;margin-top:12px">Changes are saved as you select them.</div>
+ </div>
+ <button class="btn" data-act="pg-done" style="${PGBTN}">Done</button></div>`;
+};
+B.pset=({id})=>{
+ const p=pgById(id);
+ if(!p)return;
+ phone.querySelectorAll('[data-vis]').forEach(b=>b.onclick=()=>{p.visibility=b.dataset.vis;render()});
+ phone.querySelectorAll('[data-inv]').forEach(b=>b.onclick=()=>{p.invitePerm=b.dataset.inv;render()});
+ $('[data-act=pg-done]').onclick=()=>back();
+};
 
 /* 4. New Post Overlay (with Image Edit/Delete/Replace & Org Poster Support) */
 function openNewPost(){
@@ -1670,7 +1830,7 @@ function openOrgFilter(){
    <div style="font-size:11px;font-weight:600;margin:12px 0 6px">Organization Type</div>
    ${['All','University','Department'].map(x=>`<span class="chip ${t.type===x?'on':''}" data-ot="${x}">${x}</span>`).join('')}
    <div style="font-size:11px;font-weight:600;margin:8px 0 6px">Department</div>
-   ${['All','CCMS','CHTM'].map(x=>`<span class="chip ${t.dept===x?'on':''}" data-od="${x}">${x}</span>`).join('')}
+   ${['All','CCMS','CIHTM'].map(x=>`<span class="chip ${t.dept===x?'on':''}" data-od="${x}">${x}</span>`).join('')}
    <div style="font-size:11px;font-weight:600;margin:8px 0 6px">Sort by</div>
    ${['Default','Name (A-Z)','Most Members'].map(x=>`<span class="chip ${t.sort===x?'on':''}" data-os="${x}">${x}</span>`).join('')}
    <button class="btn soft" data-ap-org style="height:28px;font-size:11px;margin-top:14px">Apply filter</button>

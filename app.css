@@ -60,9 +60,13 @@ input,textarea,select{font:inherit;border:0;outline:0}
 .dots3{display:flex;gap:6px;justify-content:center;margin-top:10px}
 .dots3 i{width:6px;height:6px;border-radius:50%;background:#d0cfcf}.dots3 i.on{background:var(--red)}
 /* nav */
-.nav{position:absolute;left:13px;top:772px;width:377px;height:60px;border-radius:50px;z-index:50;display:flex;padding:0 6px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:8px;font-size:9px;font-weight:700;color:#fff}
-.nav button.on{color:var(--red2);font-weight:800}
+.nav{position:absolute;left:13px;top:772px;width:377px;height:60px;border-radius:50px;z-index:50;display:flex;padding:0 6px;box-shadow:0 8px 24px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.35)}
+/* maroon-tinted frosted pill so the white icons stay visible over any post */
+.nav.glass{background:linear-gradient(180deg,rgba(176,92,98,.5),rgba(132,48,56,.58));backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1.2px solid rgba(255,255,255,.55)}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:8px;font-size:9px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(60,10,10,.55)}
+.nav button svg{filter:drop-shadow(0 1px 2px rgba(60,10,10,.5))}
+.nav button.on{color:#a81c1c;font-weight:800;text-shadow:0 0 6px rgba(255,255,255,.7)}
+.nav button.on svg{filter:drop-shadow(0 0 4px rgba(255,255,255,.65))}
 .navshade{position:absolute;left:0;right:0;top:722px;height:152px;background:linear-gradient(180deg,rgba(255,255,255,0),rgba(70,15,15,.0));pointer-events:none;z-index:45}
 /* titles */
 .h-title{position:absolute;left:16px;font-size:20px;font-weight:700;text-shadow:0 2px 6px rgba(0,0,0,.4)}
@@ -72,6 +76,9 @@ input,textarea,select{font:inherit;border:0;outline:0}
 .field{height:44px;border-radius:27px;background:#f5f5f5;box-shadow:inset 0 4px 4px rgba(0,0,0,.09);display:flex;align-items:center;gap:11px;padding:0 20px;color:#a3a1a1}
 .field input{flex:1;background:none;font-size:13px;font-weight:500;color:#333;min-width:0}
 .field input::placeholder{color:rgba(163,161,161,.7)}
+#pg-q::placeholder{color:rgba(255,255,255,.75)}
+.field select{flex:1;background:none;font-size:13px;font-weight:500;color:#333;min-width:0;appearance:none;-webkit-appearance:none;cursor:pointer}
+.field select:invalid,.field select:has(option[value=""]:checked){color:rgba(163,161,161,.9)}
 .btn{display:flex;gap:8px;align-items:center;justify-content:center;height:41px;border-radius:1000px;background:var(--red2);color:#fff;font-weight:600;font-size:17px;border:1px solid rgba(255,255,255,.4);box-shadow:inset 0 0 22px rgba(242,242,242,.5),inset 2px 2px 1px #b3b3b3,inset -2px -2px 1px #b3b3b3,inset 3px 3px 0 rgba(0,0,0,.5);width:100%}
 .btn.soft{background:rgba(200,60,60,.85)}
 .sheetcard{position:absolute;left:0;right:0;border-top-left-radius:43px;border-top-right-radius:43px;background:rgba(255,255,255,.14);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:inset 0 0 21px rgba(242,242,242,.5),inset 0 0 0 1px #999,inset 2px 2px 1px -2px #b3b3b3}
