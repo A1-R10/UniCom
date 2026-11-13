@@ -373,13 +373,34 @@ function getOrgForPost(p){
  return ORGS.find(o=>o.short.toLowerCase()===p.user.toLowerCase()||o.name.toLowerCase()===p.user.toLowerCase()||(p.sub&&p.sub.toLowerCase().includes(o.short.toLowerCase())));
 }
 
-function postCard(p,{menu=true}={}){
+/* ownership: a post/listing belongs to its author, not to whoever is logged in */
+const isMyPost=p=>!!p&&((!!p.userId&&p.userId===ME.id)||p.user===ME.name);
+const isMyListing=m=>!!m&&(!!m.mine||m.seller===ME.name||(!!m.sellerId&&m.sellerId===ME.id));
+
+/* upvote / downvote (with its own count) / comment footer */
+function voteBar(p){
  const lk=S.liked.has(p.id);
  const dk=S.disliked.has(p.id);
- const score=(p.up||0)+(lk?1:0)-(dk?1:0);
+ const up=(p.up||0)+(lk?1:0);
+ const down=(p.down||0)+(dk?1:0);
+ const commCount=p.comments?p.comments.length:(p.c||0);
+ return `<button class="${lk?'on':''}" data-act="like" data-id="${p.id}" title="Upvote" style="display:flex;gap:7px;align-items:center">
+    ${ic('up',13,lk?'#ac2626':'currentColor',0,lk?'#ac2626':'currentColor')}
+    <span style="color:${lk?'#ac2626':''}">${up}</span>
+  </button>
+  <button class="${dk?'on':''}" data-act="dislike" data-id="${p.id}" title="Downvote" style="margin-left:-12px;display:flex;gap:7px;align-items:center;cursor:pointer">
+    <span style="display:inline-flex;transform:scaleY(-1)">${ic('up',13,dk?'#ac2626':'#a3a1a1',0,dk?'#ac2626':'#a3a1a1')}</span>
+    <span style="color:${dk?'#ac2626':''}">${down}</span>
+  </button>
+  <button data-act="cmt" data-id="${p.id}" style="margin-left:24px;cursor:pointer" title="Comments">
+    ${ic('cmt',13,'#a3a1a1',0,'#a3a1a1')}
+    <span>${commCount}</span>
+  </button>`;
+}
+
+function postCard(p,{menu=true}={}){
  const orgMatch=getOrgForPost(p);
  const orgAttr=orgMatch?`data-act="go-org" data-oid="${orgMatch.id}" style="cursor:pointer"`:'';
- const commCount=p.comments?p.comments.length:(p.c||0);
  return `<div class="card post" data-pid="${p.id}" id="post-${p.id}">
   <div class="hd">
     <img src="${p.av||A('uscss.jpg')}" ${orgAttr}>
@@ -393,19 +414,7 @@ function postCard(p,{menu=true}={}){
   ${p.text?`<p class="tx">${p.text}</p>`:''}
   ${p.img?`<img class="im" src="${p.img}" data-act="view-img" data-img="${p.img}" data-caption="${esc(p.title)}" style="height:${p.h||190}px;object-fit:${p.fit||'cover'};background:${p.bg||'transparent'};cursor:pointer" title="Click to view full photo">`:''}
   <div class="line" style="${p.img?'display:none':''}"></div>
-  <div class="ft">
-    <button class="${lk?'on':''}" data-act="like" data-id="${p.id}" title="Upvote" style="display:flex;gap:7px;align-items:center">
-      ${ic('up',13,lk?'#ac2626':'currentColor',0,lk?'#ac2626':'currentColor')}
-      <span style="color:${lk?'#ac2626':''}">${score}</span>
-    </button>
-    <button class="${dk?'on':''}" data-act="dislike" data-id="${p.id}" title="Downvote" style="margin-left:-12px;transform:scaleY(-1);display:inline-flex;cursor:pointer">
-      ${ic('up',13,dk?'#ac2626':'#a3a1a1',0,dk?'#ac2626':'#a3a1a1')}
-    </button>
-    <button data-act="cmt" data-id="${p.id}" style="margin-left:36px;cursor:pointer" title="Comments">
-      ${ic('cmt',13,'#a3a1a1',0,'#a3a1a1')}
-      <span>${commCount}</span>
-    </button>
-  </div>
+  <div class="ft">${voteBar(p)}</div>
  </div>`;
 }
 
@@ -486,15 +495,17 @@ B.signup=()=>{phone.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>{S.
   const p2=$('#p2').value;
   if(!fn)return toast('Please enter your full name');
   if(!se)return toast('Please enter your school email');
+  if(!sn)return toast(S.signup.type==='Student'?'Please enter your student number':'Please enter your employee number');
+  if(!p1)return toast('Please enter a password');
   if(p1!==p2)return toast('Passwords do not match');
   S.pendingUser={
    name:fn,
    email:se,
-   id:sn||('404-'+Math.floor(10000+Math.random()*90000)),
+   id:sn,
    type:S.signup.type,
-   dept:'CCMS Department',
-   year:S.signup.type==='Student'?'BSCS 1st Year':'Faculty Member',
-   org:'None',
+   dept:'',
+   year:'',
+   org:'',
    phone:'',
    bday:'',
    av:A('user3.jpg'),
@@ -902,7 +913,7 @@ V.market=()=>{
 
 V.mkd=({id}={})=>{
  const m=MK.find(x=>x.id===id)||MK[0];
- const isMyItem=m.seller===ME.name||m.sellerId===ME.id||m.mine;
+ const isMyItem=isMyListing(m);
  return `<div class="screen" style="background:#f5f5f5;color:#000">
  <div style="position:absolute;left:20px;top:0;width:362px;height:360px;background:#fff">
   <img src="${m.img}" data-act="view-img" data-img="${m.img}" data-caption="${esc(m.name)}" style="width:100%;height:100%;object-fit:${['tee','calc','attire','mouse'].includes(m.id)?'contain':'cover'};cursor:pointer">
@@ -910,7 +921,7 @@ V.mkd=({id}={})=>{
  <div style="position:absolute;left:0;right:0;top:0;height:110px;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(255,255,255,0))"></div>
  ${statusBar}
  <button class="back" data-back style="top:68px">${ic('back',22,'#fff',2)}</button>
- <button data-act="edit-item" data-id="${m.id}" style="position:absolute;right:14px;top:68px;color:#fff;z-index:50;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.45);border-radius:14px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(10px)">${ic('pen',13,'#fff',2)} Edit</button>
+ ${isMyItem?`<button data-act="edit-item" data-id="${m.id}" style="position:absolute;right:14px;top:68px;color:#fff;z-index:50;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.45);border-radius:14px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(10px)">${ic('pen',13,'#fff',2)} Edit</button>`:''}
  <div style="position:absolute;left:25px;top:378px;right:20px"><div style="font-size:19px;font-weight:700">${esc(m.name)}</div><div style="font-size:23px;font-weight:700;color:#712222;margin-top:6px">${m.p?'₱'+m.p:'Inquire'}</div><div style="font-size:11px;font-weight:600;color:#777;margin-top:4px">${esc(m.st)} <span style="font-weight:400;font-size:9px">&nbsp;• ${esc(m.ago)}</span></div><div style="font-size:12.5px;color:#777;margin-top:10px;line-height:1.3;width:240px">${esc(m.d)}</div></div>
  <div style="position:absolute;left:22px;right:25px;top:565px">${[['clip','Condition',m.cond||'Good'],['bag','Category',m.cat||'General'],['user','Seller',m.seller||'MSEUF Student']].map(r=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:22px;font-size:13.500px;font-weight:600">${ic(r[0],22,'#712222',1.6)}<span style="flex:1">${r[1]}</span><b>${r[2]}</b></div>`).join('')}</div>
  ${isMyItem?`<button class="btn soft" data-act="edit-item" data-id="${m.id}" style="position:absolute;left:23px;right:23px;top:760px;width:auto;height:48px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px">${ic('pen',16,'#712222',2)} Edit Listing</button>`:`<button class="btn soft" data-act="msgseller" data-seller="${esc(m.seller||'Mark Rivera')}" style="position:absolute;left:23px;right:23px;top:760px;width:auto;height:48px;font-size:15px">Message Seller</button>`}<div class="home-ind" style="background:#fff"></div></div>`;
@@ -923,7 +934,7 @@ B.mkd=()=>{
 };
 
 V.profile=()=>{
- const mine=POSTS.filter(p=>p.cat.includes('mine')||p.userId===ME.id||p.user===ME.name);
+ const mine=POSTS.filter(isMyPost);
  return `<div class="screen">${bgLayer()}${statusBar}
  <div class="ptitle" style="top:74px;font-size:15px;z-index:50">Profile</div>
  <button data-go="settings" style="position:absolute;right:18px;top:72px;z-index:50;cursor:pointer" title="Settings">${ic('gear',22,'#fff',1.4)}</button>
@@ -936,7 +947,7 @@ V.profile=()=>{
    <div style="text-align:center;font-size:10px;opacity:.85;margin-top:4px">${esc(ME.type)} &nbsp;|&nbsp; ${esc(ME.id)}</div>
    <div style="font-size:14px;font-weight:700;margin-top:22px;margin-bottom:14px">Personal Details</div>
    <div style="display:flex;flex-direction:column;gap:16px;font-size:11px;font-weight:500">
-    ${[['id',ME.dept||'CCMS Department'],['grad',ME.year||'BSCS 3rd Year'],['org',ME.org||'Pet Society']].map(r=>`<div style="display:flex;gap:12px;align-items:center">${ic(r[0],17,'#fff',1.4)}${esc(r[1])}</div>`).join('')}
+    ${[['id',ME.dept],['grad',ME.year],['org',ME.org]].map(r=>`<div style="display:flex;gap:12px;align-items:center${r[1]?'':';opacity:.55'}">${ic(r[0],17,'#fff',1.4)}${r[1]?esc(r[1]):'Not set'}</div>`).join('')}
    </div>
   </div>
   <div style="font-size:16px;font-weight:700;margin:18px 18px 10px">All post</div>
@@ -974,19 +985,19 @@ V.edit=()=>`<div class="screen">${bgLayer()}${statusBar}<button class="back" dat
    ${lab('Email')}
    <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-email" value="${esc(ME.email)}" style="font-size:10px"></div>
    ${lab('Phone Number (Optional)')}
-   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-phone" value="${esc(ME.phone||'+63 900 000 0000')}" style="font-size:10px"></div>
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-phone" value="${esc(ME.phone||'')}" placeholder="e.g. +63 900 000 0000" style="font-size:10px"></div>
    ${lab('Birthday')}
-   <div class="field" style="height:32px;border-radius:7px;margin-bottom:4px;padding:0 10px"><input id="ep-bday" value="${esc(ME.bday||'01/01/2004')}" style="font-size:10px"></div>
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:4px;padding:0 10px"><input id="ep-bday" value="${esc(ME.bday||'')}" placeholder="MM/DD/YYYY" style="font-size:10px"></div>
   </div>
 
   <div class="lg" style="border-radius:18px;padding:12px 14px 14px;margin-bottom:12px">
    <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:10px">Personal & Academic Details ${ic('grad',14,'#fff',1.6)}</div>
    ${lab('Department')}
-   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-dept" value="${esc(ME.dept||'CCMS Department')}" placeholder="e.g. CCMS Department" style="font-size:10px"></div>
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-dept" value="${esc(ME.dept||'')}" placeholder="e.g. CCMS Department" style="font-size:10px"></div>
    ${lab('Year / Level')}
-   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-year" value="${esc(ME.year||'BSCS 3rd Year')}" placeholder="e.g. BSCS 3rd Year" style="font-size:10px"></div>
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:10px;padding:0 10px"><input id="ep-year" value="${esc(ME.year||'')}" placeholder="e.g. BSCS 3rd Year" style="font-size:10px"></div>
    ${lab('Affiliated Organization')}
-   <div class="field" style="height:32px;border-radius:7px;margin-bottom:4px;padding:0 10px"><input id="ep-org" value="${esc(ME.org||'Pet Society')}" placeholder="e.g. Pet Society" style="font-size:10px"></div>
+   <div class="field" style="height:32px;border-radius:7px;margin-bottom:4px;padding:0 10px"><input id="ep-org" value="${esc(ME.org||'')}" placeholder="e.g. Pet Society" style="font-size:10px"></div>
   </div>
  </div>
  <button class="btn" data-act="saveprof" style="position:absolute;left:30px;right:30px;bottom:18px;width:auto;height:42px;font-size:13px;z-index:10">Save Changes</button>
@@ -1024,9 +1035,9 @@ B.edit=()=>{
   ME.email=em;
   ME.phone=ph;
   ME.bday=bd;
-  ME.dept=dept||'CCMS Department';
-  ME.year=yr||'BSCS 3rd Year';
-  ME.org=org||'None';
+  ME.dept=dept;
+  ME.year=yr;
+  ME.org=org;
   ME.av=newAv;
 
   const u=USERS.find(x=>x.id===oldId||x.id===ME.id||x.email===ME.email);
@@ -1458,7 +1469,8 @@ function openPostItem(){
     ago:'Just now',
     cond:condVal,
     cat:catVal,
-    seller:ME.name
+    seller:ME.name,
+    sellerId:ME.id
    };
 
    MK.unshift(newItem);
@@ -1474,6 +1486,7 @@ function openPostItem(){
 function openEditItem(itemId){
  const existing=MK.find(x=>x.id===itemId||String(x.id)===String(itemId));
  if(!existing)return toast('Item not found');
+ if(!isMyListing(existing))return toast('Only the seller can edit this listing');
  let itemImg=existing.img;
  const draw=(keep)=>{
   const n=keep?$('#mi-name').value:existing.name;
@@ -1702,7 +1715,7 @@ function openMarketFilter(){
 /* 10. Post 3-Dots Menu */
 function openPostMenu(id,btn){
  const p=POSTS.find(x=>x.id===id);
- const isMine=p&&(p.cat.includes('mine')||p.userId===ME.id||p.user===ME.name);
+ const isMine=isMyPost(p);
  const r=btn.getBoundingClientRect(),pr=phone.getBoundingClientRect(),sc=pr.width/402;
  const y=Math.max(10,Math.min(700,(r.bottom-pr.top)/sc)),x=Math.max(10,Math.min(190,(r.right-pr.left)/sc-200));
  
@@ -1872,25 +1885,8 @@ function updatePostVotes(id){
  if(!p)return;
  const card=$(`.post[data-pid="${id}"]`);
  if(!card){render();return;}
- const lk=S.liked.has(id);
- const dk=S.disliked.has(id);
- const score=(p.up||0)+(lk?1:0)-(dk?1:0);
- const commCount=p.comments?p.comments.length:(p.c||0);
-
  const ft=card.querySelector('.ft');
- if(ft){
-  ft.innerHTML=`<button class="${lk?'on':''}" data-act="like" data-id="${p.id}" title="Upvote" style="display:flex;gap:7px;align-items:center">
-    ${ic('up',13,lk?'#ac2626':'currentColor',0,lk?'#ac2626':'currentColor')}
-    <span style="color:${lk?'#ac2626':''}">${score}</span>
-  </button>
-  <button class="${dk?'on':''}" data-act="dislike" data-id="${p.id}" title="Downvote" style="margin-left:-12px;transform:scaleY(-1);display:inline-flex;cursor:pointer">
-    ${ic('up',13,dk?'#ac2626':'#a3a1a1',0,dk?'#ac2626':'#a3a1a1')}
-  </button>
-  <button data-act="cmt" data-id="${p.id}" style="margin-left:36px;cursor:pointer" title="Comments">
-    ${ic('cmt',13,'#a3a1a1',0,'#a3a1a1')}
-    <span>${commCount}</span>
-  </button>`;
- }
+ if(ft)ft.innerHTML=voteBar(p);
 }
 
 /* ---------- global events ---------- */
@@ -2010,7 +2006,7 @@ phone.addEventListener('click',e=>{
    }else if(target.type==='org'){
     go('orgd',{id:target.id});
    }else if(target.type==='convo'){
-    go('convo',{id:target.id});
+    reset('msg');
    }
   }
  }
